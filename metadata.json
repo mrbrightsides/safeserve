@@ -1,0 +1,8 @@
+{
+  "name": "safeserve",
+  "description": "An AI-powered food safety intelligence platform for Indonesia's Makan Bergizi Gratis (MBG) program, enabling real-time oversight for regulators, schools, and vendors.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
