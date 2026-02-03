@@ -1,60 +1,65 @@
 # SafeServe MBG 🛡️
 
 > **Restoring Trust in the Makan Bergizi Gratis (MBG) Program**  
-> *AI-Driven Oversight & Real-Time Incident Response for National Food Safety*
+> *Unified Food Safety Governance, AI Intelligence & Immutable Accountability*
 
-![Status](https://img.shields.io/badge/Status-Hackathon_MVP-orange) ![License](https://img.shields.io/badge/License-MIT-blue) ![Stack](https://img.shields.io/badge/Tech-React_19_Gemini_3-black)
+![Status](https://img.shiellds.io/badge/Status-Frostbyte_2026_Candidate-indigo) ![License](https://img.shields.io/badge/License-MIT-blue) ![Stack](https://img.shields.io/badge/AI-Gemini_3.1_Flash_Reasoning-red)
 
 ## 🚨 The Challenge: The "MBG Crisis"
 
-In 2025, Indonesia's historic **Makan Bergizi Gratis (MBG)** program—aiming to feed 83 million beneficiaries—faced a critical operational challenge. Within months of launch, over **11,500 students** were affected by food poisoning incidents due to fragmented oversight of hyper-local vendors (UMKM).
+In 2025, Indonesia's historic **Makan Bergizi Gratis (MBG)** program—aiming to feed 83 million beneficiaries—faced a critical operational challenge. Fragmented oversight of hyper-local vendors (UMKM) led to significant food safety blind spots.
 
-**SafeServe** is a centralized, AI-powered food safety intelligence platform designed to replace reactive damage control with **proactive detection and immutable accountability**.
+**SafeServe** is a centralized, AI-powered food safety intelligence platform designed to replace reactive damage control with **proactive detection and immutable governance**.
 
 ## 💡 The Solution: Unified Safety Ecosystem
 
-SafeServe connects Schools, Vendors, and the Government (BGN/BPOM) in a real-time loop:
+SafeServe connects Schools, Vendors, and the Government (BGN/BPOM) in a real-time safety loop:
 
-### 1. 🏛️ Regulator Dashboard (BGN / BPOM)
-*   **Regional Risk Heatmaps**: Live geographical risk assessment powered by **Gemini 3 Pro Search Grounding**.
-*   **Predictive Outbreak Scoring**: A hybrid "Brain Circuit" that weights school reports, social sentiment, and IoT anomalies.
-*   **Social Pulse**: Automated clustering of social media reports to detect "hidden" outbreaks before they reach official channels.
+### 1. 🏛️ Regulator Dashboard (National Oversight)
+*   **System Simulation Mode**: Trigger and manage "Outbreak Scenarios" to test regional response readiness.
+*   **AI Explainability**: Deep "Reasoning Chains" that explain *why* a vendor is flagged as high-risk using Gemini 3.1 Reasoning.
+*   **Regional Pulse**: Live geographical risk heatmaps powered by **Google Search Grounding**.
+*   **AI Intelligence Briefings**: Profile-integrated status synthesis for quick administrative decision-making.
 
 ### 2. 🚚 Vendor Portal (Catering / UMKM)
-*   **AI Hygiene Audit**: Multimodal computer vision analysis of prep areas using **Gemini 3 Flash**.
-*   **Cold-Chain Telemetry**: Live simulation of refrigeration stability (IoT-ready).
-*   **Traceability Ledger**: Clickable batch history with temperature logs, staff wellness records, and verification documents.
+*   **Multimodal Hygiene Audit**: Computer vision analysis of preparation areas to ensure BPOM compliance.
+*   **Advanced Traceability**: Searchable, filterable blockchain-verified inventory ledger (Poultry, Grains, Vegetables).
+*   **Staff Wellness Ledger**: Biometric health check-ins (temperature & symptoms) required for shift clearance.
+*   **IoT Cold-Chain**: Real-time telemetry monitoring for refrigeration stability.
 
 ### 3. 🏫 School Portal (Teachers / Admins)
-*   **AI-Driven Triage**: Real-time symptom analysis providing 1-10 severity scores and immediate medical protocols.
-*   **Knowledge Graphing**: Mapping symptom clusters to likely foodborne pathogens.
-*   **Vendor Transparency**: One-click "Audit Dossier" to view a vendor's safety history and integrity proofs.
+*   **SOS Emergency Reporting**: Instant symptom-cluster reporting with AI-driven severity triage (1-10 index).
+*   **Nutrition Compliance Gauge**: Real-time menu analysis ensuring caloric and micronutrient targets are met.
+*   **Vendor Dossier**: One-click transparency into an assigned vendor's safety grade, audit milestones, and integrity proofs.
+
+### 4. 🍃 Sustainability & Waste Portal (Governance)
+*   **Active Governance Mode**: Automated AI policy adjustment loop based on district consumption curves.
+*   **Simulation Delta Panel**: Monte Carlo modeling of policy impacts on CO₂ offsets and meal recovery.
+*   **Inefficiency Benchmarking**: Data-driven ranking of vendor waste variance to optimize resource allocation.
 
 ## 🚀 Advanced AI Implementation
 
-SafeServe leverages the full power of the **Google Gemini API**:
-- **Multimodal Analysis**: Processing kitchen photos for sanitation compliance.
-- **Search Grounding**: Injecting real-world news and regional data into risk models.
-- **Structured Intelligence**: Utilizing `responseSchema` for deterministic JSON workflows in incident triage.
-- **Resilient Engineering**: Built-in **Circuit Breaker** and **Exponential Backoff** logic to handle API rate limits (429s) gracefully, ensuring "Local Mode" functionality.
+SafeServe utilizes the full spectrum of the **Google Gemini API**:
+- **Reasoning Models**: Leveraging `gemini-3.1-flash-reasoning` for complex risk triage and evidence synthesis.
+- **Search Grounding**: Injecting real-world news and regional stability data into risk models via the `googleSearch` tool.
+- **Structured Intelligence**: Rigid `responseSchema` implementation for deterministic JSON data flows in audit dossiers.
+- **Resilient Engineering**: Built-in **Circuit Breaker** and **Exponential Backoff** logic for robust performance during peak loads.
+
+## 🛡️ Security & Integrity
+*   **Security Vault**: Layered defense including MFA, Biometric Signatures, and AES-256 session encryption.
+*   **Root Key Rotation**: Administrative ability to rotate digital signatures for the national ledger.
+*   **Deep Cluster Scans**: Automated integrity checks for node synchronization across Jakarta and regional hubs.
 
 ## 🛠️ Tech Stack
 
 | Category | Technology | Purpose |
 |----------|------------|---------|
-| **Frontend** | React 19 + Vite | Modern, high-performance UI |
-| **AI Engine** | Gemini 3 (Flash & Pro) | Predictive scoring, Vision, and Triage |
-| **Data Viz** | Recharts | Real-time telemetry and trend analysis |
-| **Styling** | Tailwind CSS 4 | Custom OKLCH color system for accessibility |
-| **Integrity** | (Mocked) Blockchain Hashes | Ensuring non-repudiation of incident logs |
-
-## ⚖️ Judging Criteria Alignment (Frostbyte Hackathon 2026)
-
-*   **Innovation**: Novel use of social sentiment monitoring to bypass traditional "oversight blindness."
-*   **Complexity**: Integration of multimodal vision, real-time telemetry simulation, and robust error-handling patterns.
-*   **Impact**: Directly addresses a national-scale public health challenge affecting millions of children.
-*   **Clarity**: Role-based portals with specialized workflows for Teachers, Vendors, and Regulators.
+| **Frontend** | React 19 + TypeScript | High-performance, modern UI components |
+| **AI Engine** | Gemini 3.1 (Flash & Pro) | Triage, Vision, and Grounding |
+| **Data Viz** | Recharts | Real-time telemetry and waste benchmarks |
+| **Styling** | Tailwind CSS 4 | Custom design system for mission-critical UX |
+| **Trust Layer** | Mocked Blockchain Hashes | Ensuring non-repudiation of safety logs |
 
 ---
 
-*Built with ❤️ for the 2026 Frostbyte Hackathon.*
+*Built for the 2026 Frostbyte Hackathon. Empowering the nation through safety.*
