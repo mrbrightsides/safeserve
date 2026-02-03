@@ -5,9 +5,11 @@ import { LayoutDashboard, Truck, School, ShieldAlert, Settings, Info, Leaf } fro
 interface SidebarProps {
   activeRole: UserRole;
   onRoleChange: (role: UserRole) => void;
+  onSettingsClick?: () => void;
+  onInfoClick?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeRole, onRoleChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeRole, onRoleChange, onSettingsClick, onInfoClick }) => {
   const roles = [
     { id: UserRole.REGULATOR, label: 'Regulator', icon: LayoutDashboard },
     { id: UserRole.VENDOR, label: 'Vendor Portal', icon: Truck },
@@ -49,8 +51,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeRole, onRoleChange }) => {
         </div>
         
         <div className="flex items-center justify-between text-slate-500">
-          <Settings className="w-5 h-5 cursor-pointer hover:text-white" />
-          <Info className="w-5 h-5 cursor-pointer hover:text-white" />
+          <Settings 
+            onClick={onSettingsClick}
+            className="w-5 h-5 cursor-pointer hover:text-white transition-colors" 
+          />
+          <Info 
+            onClick={onInfoClick}
+            className="w-5 h-5 cursor-pointer hover:text-white transition-colors" 
+          />
           <span className="text-[10px] font-mono">v1.3.0-WASTE</span>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
@@ -95,7 +94,6 @@ const RegulatorDashboard: React.FC = () => {
   const [riskSources, setRiskSources] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [trend, setTrend] = useState<'up' | 'down'>('up');
-  const [isFallbackMode, setIsFallbackMode] = useState(false);
 
   const [riskInputs, setRiskInputs] = useState({
     schoolReports: 3,
@@ -189,11 +187,6 @@ const RegulatorDashboard: React.FC = () => {
       const result = await getRegionalRiskAssessment();
       setRegionalRisks(result.data);
       setRiskSources(result.sources || []);
-      if (result.isFallback) {
-        setIsFallbackMode(true);
-      } else {
-        setIsFallbackMode(false);
-      }
     } finally {
       setIsRisksLoading(false);
     }
@@ -283,18 +276,6 @@ const RegulatorDashboard: React.FC = () => {
             {isSimulationMode ? 'Stop Simulation' : 'Simulate Outbreak'}
           </button>
         </div>
-
-        {isFallbackMode && (
-          <div className="md:w-64 p-4 bg-amber-50 rounded-[2rem] border border-amber-200 flex items-center gap-3 animate-in slide-in-from-right-4">
-            <div className="p-2 bg-amber-200 rounded-xl">
-              <CloudOff className="w-5 h-5 text-amber-700" />
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black text-amber-800 uppercase tracking-widest leading-none">Local Mode</h4>
-              <p className="text-[9px] text-amber-600 font-bold mt-1">API Quota Reached. Using offline data.</p>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

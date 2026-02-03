@@ -13,7 +13,8 @@ import {
   X, Fingerprint, Lock, ShieldAlert, Zap, Search,
   ShieldQuestion, Scan, ArrowRight, Utensils, Heart, Globe,
   LayoutDashboard, Truck, School, Leaf,
-  BrainCircuit, Thermometer
+  BrainCircuit, Thermometer, Info, BadgeCheck, ExternalLink,
+  Users
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -22,6 +23,7 @@ const App: React.FC = () => {
   const [activeRole, setActiveRole] = useState<UserRole>(UserRole.REGULATOR);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   
   // Admin Action States
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
@@ -58,7 +60,7 @@ const App: React.FC = () => {
   const generateAIBriefing = async () => {
     setIsGeneratingBriefing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Summarize the current status of a national food safety program. Mention: 1.2M beneficiaries, 94% supply health, and 14k meals saved. Be concise, authoritative, and professional for an Admin briefing."
@@ -206,7 +208,7 @@ const App: React.FC = () => {
                       }}
                       className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-3"
                     >
-                      Choose Your Portal <ArrowRight className="w-4 h-4" />
+                      Enter Governance Dashboard <ArrowRight className="w-4 h-4" />
                     </button>
                     <div className="flex items-center gap-4 px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl">
                        <div className="flex -space-x-3">
@@ -332,7 +334,12 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-left animate-in fade-in duration-500">
-      <Sidebar activeRole={activeRole} onRoleChange={setActiveRole} />
+      <Sidebar 
+        activeRole={activeRole} 
+        onRoleChange={setActiveRole} 
+        onSettingsClick={() => setIsSecurityModalOpen(true)}
+        onInfoClick={() => setIsAboutModalOpen(true)}
+      />
 
       <main className="flex-1 overflow-auto">
         <header className="bg-white border-b border-gray-200 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-sm">
@@ -469,12 +476,11 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* Improved Security Vault Modal */}
+        {/* Security Vault Modal */}
         {isSecurityModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" 
                onClick={(e) => e.target === e.currentTarget && setIsSecurityModalOpen(false)}>
             <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden flex flex-col max-h-[85vh]">
-              {/* Modal Header */}
               <div className="p-8 bg-slate-900 text-white shrink-0 relative">
                 <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"><ShieldAlert className="w-32 h-32" /></div>
                 <div className="flex justify-between items-start relative z-10">
@@ -496,11 +502,9 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Modal Content - Scrollable */}
               <div className="p-8 flex-1 overflow-y-auto space-y-8 no-scrollbar">
-                {/* Vault Diagnostic Summary */}
                 <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><Search className="w-16 h-16" /></div>
+                   <div className="absolute top-0 right-0 p-4 opacity-5"><Search className="w-16 h-16" /></div>
                    <div className={`text-5xl font-black tracking-tighter transition-colors ${vaultStatus === 'SCANNING' ? 'text-amber-500' : 'text-emerald-500'}`}>
                       {vaultStatus === 'SCANNING' ? '...' : '100%'}
                    </div>
@@ -515,7 +519,6 @@ const App: React.FC = () => {
                    </button>
                 </div>
 
-                {/* Root Signature Section */}
                 <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
@@ -535,7 +538,6 @@ const App: React.FC = () => {
                     </div>
                  </div>
 
-                 {/* Security Layers Checklist */}
                  <div className="space-y-3">
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Live Defense Layers</h4>
                     <SecurityLayer label="Multi-Factor Auth (MFA)" status={vaultStatus === 'SCANNING' ? 'Checking' : 'Active'} icon={<ShieldCheck className="text-emerald-500" />} active={vaultStatus !== 'SCANNING'} />
@@ -544,7 +546,6 @@ const App: React.FC = () => {
                  </div>
               </div>
 
-              {/* Modal Footer */}
               <div className="p-8 pt-0 shrink-0">
                  <button 
                    onClick={() => setIsSecurityModalOpen(false)}
@@ -552,6 +553,74 @@ const App: React.FC = () => {
                  >
                    Seal & Exit Vault
                  </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* About Modal */}
+        {isAboutModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" 
+               onClick={(e) => e.target === e.currentTarget && setIsAboutModalOpen(false)}>
+            <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden flex flex-col max-h-[85vh]">
+              <div className="p-10 bg-indigo-600 text-white shrink-0 relative">
+                <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Shield className="w-48 h-48" /></div>
+                <div className="flex justify-between items-start relative z-10">
+                  <div className="flex items-center gap-5">
+                    <div className="p-4 bg-white/20 rounded-3xl shadow-xl backdrop-blur-md">
+                      <Info className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black tracking-tighter leading-none">SafeServe MBG</h3>
+                      <p className="text-[10px] text-indigo-200 font-black uppercase tracking-widest mt-2">v1.3.0 Frostbyte Alpha</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsAboutModalOpen(false)} className="p-3 hover:bg-white/10 rounded-2xl transition-colors cursor-pointer">
+                    <X className="w-6 h-6 text-white" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-10 flex-1 overflow-y-auto space-y-8 no-scrollbar">
+                <div className="space-y-4">
+                  <h4 className="text-xl font-black text-gray-900 tracking-tight">Our Mission</h4>
+                  <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                    SafeServe MBG is an AI-powered safety layer designed to support Indonesia's <b>Makan Bergizi Gratis</b> program. By integrating real-time computer vision, IoT telemetry, and social sentiment analysis, we ensure 83 million beneficiaries receive safe, high-quality nutrition every day.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <AboutStat icon={<Users className="w-4 h-4" />} label="Beneficiaries" value="83M+" />
+                  <AboutStat icon={<Truck className="w-4 h-4" />} label="Verified Nodes" value="1.2M" />
+                  <AboutStat icon={<ShieldCheck className="w-4 h-4" />} label="Compliance Rate" value="99.2%" />
+                  <AboutStat icon={<Heart className="w-4 h-4" />} label="Health Score" value="A+" />
+                </div>
+
+                <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
+                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                     <BadgeCheck className="w-4 h-4 text-emerald-500" /> Regulatory Partners
+                   </h4>
+                   <div className="flex items-center justify-between gap-4 grayscale opacity-60">
+                      <div className="flex-1 h-8 bg-slate-200 rounded-lg animate-pulse" />
+                      <div className="flex-1 h-8 bg-slate-200 rounded-lg animate-pulse" />
+                      <div className="flex-1 h-8 bg-slate-200 rounded-lg animate-pulse" />
+                   </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                      <Fingerprint className="w-4 h-4 text-slate-300" />
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Built for Frostbyte Hackathon 2026</span>
+                   </div>
+                   <a 
+                    href="https://github.com/mrbrightsides/safeserve" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors"
+                   >
+                     View Repository <ExternalLink className="w-3 h-3" />
+                   </a>
+                </div>
               </div>
             </div>
           </div>
@@ -601,6 +670,14 @@ const SecurityLayer = ({ label, status, icon, active }: { label: string, status:
         {status === 'Checking' || status === 'Hashing' || status === 'Syncing' ? <Loader2 className="w-3 h-3 animate-spin text-amber-500" /> : null}
         <span className={`text-[10px] font-black uppercase tracking-widest ${active ? 'text-slate-400' : 'text-amber-500'}`}>{status}</span>
      </div>
+  </div>
+);
+
+const AboutStat = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
+  <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-center group hover:bg-white hover:shadow-md transition-all">
+    <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center mx-auto mb-2 text-indigo-600 shadow-sm group-hover:scale-110 transition-transform">{icon}</div>
+    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{label}</span>
+    <span className="text-lg font-black text-slate-900 tracking-tight">{value}</span>
   </div>
 );
 
