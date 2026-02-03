@@ -3,7 +3,7 @@
 > **Restoring Trust in the Makan Bergizi Gratis (MBG) Program**  
 > *Unified Food Safety Governance, AI Intelligence & Immutable Accountability*
 
-![Status](https://img.shiellds.io/badge/Status-Frostbyte_2026_Candidate-indigo) ![License](https://img.shields.io/badge/License-MIT-blue) ![Stack](https://img.shields.io/badge/AI-Gemini_3.1_Flash_Reasoning-red)
+![Status](https://img.shields.io/badge/Status-Hackathon_MVP-orange) ![License](https://img.shields.io/badge/License-MIT-blue) ![Stack](https://img.shields.io/badge/AI-Gemini_3.1_Flash_Reasoning-red)
 
 ## 🚨 The Challenge: The "MBG Crisis"
 
