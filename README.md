@@ -1,7 +1,7 @@
 # SafeServe MBG 🛡️
 > **Restoring Trust in the Makan Bergizi Gratis (MBG) Program** > *Unified Food Safety Governance, AI Intelligence & Immutable Accountability*
 
-[![Status](https://img.shields.io/badge/Status-Hackathon_MVP-orange?style=for-the-badge)](https://github.com/mrbrightsides/safeserve)
+[![Status](https://img.shields.io/badge/Status-Live_MVP-orange?style=for-the-badge)](https://github.com/mrbrightsides/safeserve)
 [![AI-Model](https://img.shields.io/badge/AI-Gemini_2.0_Flash_Reasoning-red?style=for-the-badge)](https://ai.google.dev/)
 [![Stack](https://img.shields.io/badge/Stack-React_19_+_Vite-blue?style=for-the-badge)](https://vitejs.dev/)
 
@@ -73,4 +73,4 @@ SafeServe leverages the cutting edge of Generative AI to ensure national safety:
 4. Run: `npm run dev`
 
 ---
-*Built for the 2026 Frostbyte Hackathon. Empowering the nation through safety.*
+*Built for the better Indonesia. Empowering the nation through safety.*

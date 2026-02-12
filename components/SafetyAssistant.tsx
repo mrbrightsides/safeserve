@@ -1,11 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   MessageSquare, Send, X, Bot, User, Loader2, Sparkles, 
   ShieldCheck, AlertCircle, ChevronDown, RefreshCw 
 } from 'lucide-react';
 import { startSafetyChat } from '../geminiService';
-import { GenerateContentResponse } from '@google/genai';
 
 interface Message {
   role: 'user' | 'model';
@@ -26,8 +24,17 @@ const SafetyAssistant: React.FC<SafetyAssistantProps> = ({ role }) => {
   const chatRef = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Helper to remove asterisks from the model's response for a cleaner look
+  const cleanText = (text: string) => {
+    return text.replace(/\*/g, '').trim();
+  };
+
   useEffect(() => {
+    // Re-initialize chat session when role changes to ensure correct system instruction context
     chatRef.current = startSafetyChat(role);
+    setMessages([
+      { role: 'model', text: `Halo! I am SafeServe AI. I've updated my protocols for your current role as: ${role}. What can I help you with?` }
+    ]);
   }, [role]);
 
   useEffect(() => {
@@ -41,16 +48,22 @@ const SafetyAssistant: React.FC<SafetyAssistantProps> = ({ role }) => {
 
     const userMessage = input.trim();
     setInput('');
+    
+    // UI immediate update
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
     try {
       if (!chatRef.current) chatRef.current = startSafetyChat(role);
       
+      // Sending message through the stateful chat session to maintain context
       const response = await chatRef.current.sendMessage({ message: userMessage });
-      const text = response.text || "I'm having trouble connecting to the safety database. Please try again.";
+      const rawText = response.text || "I'm having trouble connecting to the safety database. Please try again.";
       
-      setMessages(prev => [...prev, { role: 'model', text }]);
+      // Process text to remove asterisks and format cleanly
+      const processedText = cleanText(rawText);
+      
+      setMessages(prev => [...prev, { role: 'model', text: processedText }]);
     } catch (error) {
       console.error("Chat Error:", error);
       setMessages(prev => [...prev, { role: 'model', text: "Quota exceeded or connection lost. Please wait a moment." }]);
@@ -114,7 +127,7 @@ const SafetyAssistant: React.FC<SafetyAssistantProps> = ({ role }) => {
                   <div className={`p-4 rounded-3xl text-xs font-medium leading-relaxed shadow-sm border ${
                     msg.role === 'user' 
                       ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none' 
-                      : 'bg-white text-gray-800 border-gray-100 rounded-tl-none'
+                      : 'bg-white text-gray-800 border-gray-100 rounded-tl-none whitespace-pre-wrap'
                   }`}>
                     {msg.text}
                   </div>
@@ -143,7 +156,7 @@ const SafetyAssistant: React.FC<SafetyAssistantProps> = ({ role }) => {
               {quickActions.map(action => (
                 <button 
                   key={action}
-                  onClick={() => setInput(action)}
+                  onClick={() => { setInput(action); }}
                   className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-3 py-1.5 border border-slate-100 rounded-xl hover:border-indigo-600 hover:text-indigo-600 transition-all"
                 >
                   {action}

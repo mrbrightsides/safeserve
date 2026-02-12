@@ -14,14 +14,24 @@ import {
   ShieldQuestion, Scan, ArrowRight, Utensils, Heart, Globe,
   LayoutDashboard, Truck, School, Leaf,
   BrainCircuit, Thermometer, Info, BadgeCheck, ExternalLink,
-  Users
+  Users, AlertCircle, CheckCircle2, Siren, Clock
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+
+interface NotificationItem {
+  id: string;
+  title: string;
+  desc: string;
+  time: string;
+  type: 'CRITICAL' | 'WARNING' | 'INFO' | 'SUCCESS';
+  read: boolean;
+}
 
 const App: React.FC = () => {
   const [view, setView] = useState<'LANDING' | 'DASHBOARD'>('LANDING');
   const [activeRole, setActiveRole] = useState<UserRole>(UserRole.REGULATOR);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   
@@ -40,12 +50,24 @@ const App: React.FC = () => {
   const [isScanningVault, setIsScanningVault] = useState(false);
   const [vaultStatus, setVaultStatus] = useState<'SECURE' | 'SCANNING' | 'VERIFIED'>('SECURE');
 
+  // Notifications State
+  const [notifications, setNotifications] = useState<NotificationItem[]>([
+    { id: '1', title: 'Outbreak Detected', desc: 'Cluster A-12 in West Jakarta reports symptom spike.', time: '2m ago', type: 'CRITICAL', read: false },
+    { id: '2', title: 'Node Sync Success', desc: 'Regional hub JKT-01 successfully synchronized.', time: '15m ago', type: 'SUCCESS', read: false },
+    { id: '3', title: 'Safety Advisory', desc: 'New peanut allergen advisory for West Java region.', time: '1h ago', type: 'WARNING', read: true },
+    { id: '4', title: 'Trust Score Update', desc: 'Bunda Catering trust score elevated to A+.', time: '3h ago', type: 'INFO', read: true },
+  ]);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -138,6 +160,16 @@ const App: React.FC = () => {
     }, 3000);
   };
 
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   const renderContent = () => {
     switch (activeRole) {
       case UserRole.REGULATOR: return <RegulatorDashboard />;
@@ -208,7 +240,7 @@ const App: React.FC = () => {
                       }}
                       className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-3"
                     >
-                      Enter Governance Dashboard <ArrowRight className="w-4 h-4" />
+                      Choose Your Portal <ArrowRight className="w-4 h-4" />
                     </button>
                     <div className="flex items-center gap-4 px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl">
                        <div className="flex -space-x-3">
@@ -356,11 +388,69 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-6">
-             <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-slate-50 border border-slate-100 rounded-2xl">
-                <div className="relative">
-                   <Bell className="w-5 h-5 text-slate-400" />
-                   <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-                </div>
+             <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-slate-50 border border-slate-100 rounded-2xl relative" ref={notificationsRef}>
+                <button 
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className={`relative p-2 rounded-xl transition-all ${isNotificationsOpen ? 'bg-slate-900 text-white shadow-lg' : 'hover:bg-slate-100 text-slate-400'}`}
+                >
+                   <Bell className="w-5 h-5" />
+                   {unreadCount > 0 && (
+                     <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <span className="text-[8px] font-black text-white">{unreadCount}</span>
+                     </div>
+                   )}
+                </button>
+                
+                {/* Notifications Dropdown */}
+                {isNotificationsOpen && (
+                  <div className="absolute top-full right-0 mt-4 w-96 bg-white rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.2)] border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 z-50">
+                    <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <ShieldAlert className="w-5 h-5 text-indigo-400" />
+                        <h3 className="text-lg font-black tracking-tight">System Alerts</h3>
+                      </div>
+                      <button onClick={markAllAsRead} className="text-[9px] font-black text-indigo-400 uppercase tracking-widest hover:text-white transition-colors">Mark All Read</button>
+                    </div>
+                    
+                    <div className="max-h-[400px] overflow-y-auto no-scrollbar">
+                      {notifications.length > 0 ? (
+                        notifications.map((n) => (
+                          <div key={n.id} className={`p-6 border-b border-slate-50 flex items-start gap-4 transition-all hover:bg-slate-50 relative ${!n.read ? 'bg-indigo-50/30' : ''}`}>
+                            <div className={`p-2 rounded-xl shrink-0 ${
+                              n.type === 'CRITICAL' ? 'bg-red-100 text-red-600' :
+                              n.type === 'WARNING' ? 'bg-amber-100 text-amber-600' :
+                              n.type === 'SUCCESS' ? 'bg-emerald-100 text-emerald-600' :
+                              'bg-indigo-100 text-indigo-600'
+                            }`}>
+                              {n.type === 'CRITICAL' ? <Siren className="w-4 h-4" /> : 
+                               n.type === 'WARNING' ? <AlertCircle className="w-4 h-4" /> :
+                               n.type === 'SUCCESS' ? <CheckCircle2 className="w-4 h-4" /> :
+                               <Info className="w-4 h-4" />}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className={`text-xs font-black ${!n.read ? 'text-gray-900' : 'text-slate-500'}`}>{n.title}</h4>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{n.time}</span>
+                              </div>
+                              <p className="text-[10px] font-medium text-slate-500 leading-relaxed">{n.desc}</p>
+                            </div>
+                            {!n.read && <div className="absolute right-6 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-indigo-600 rounded-full" />}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                          <Bell className="w-10 h-10 mb-4 opacity-20" />
+                          <p className="text-[10px] font-black uppercase tracking-widest">No Active Notifications</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="p-6 pt-0">
+                      <button onClick={clearNotifications} className="w-full mt-4 py-3 text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors border-t border-slate-100">Clear History</button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="w-px h-4 bg-slate-200 mx-1" />
                 <div className="flex items-center gap-1.5">
                    <Cpu className="w-4 h-4 text-emerald-500" />
@@ -572,7 +662,7 @@ const App: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-3xl font-black tracking-tighter leading-none">SafeServe MBG</h3>
-                      <p className="text-[10px] text-indigo-200 font-black uppercase tracking-widest mt-2">v1.3.0 Frostbyte Alpha</p>
+                      <p className="text-[10px] text-indigo-200 font-black uppercase tracking-widest mt-2">v1.3.0 Stable</p>
                     </div>
                   </div>
                   <button onClick={() => setIsAboutModalOpen(false)} className="p-3 hover:bg-white/10 rounded-2xl transition-colors cursor-pointer">
@@ -610,7 +700,7 @@ const App: React.FC = () => {
                 <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
                    <div className="flex items-center gap-3">
                       <Fingerprint className="w-4 h-4 text-slate-300" />
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Built for Frostbyte Hackathon 2026</span>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Built for National Food Safety Governance</span>
                    </div>
                    <a 
                     href="https://github.com/mrbrightsides/safeserve" 

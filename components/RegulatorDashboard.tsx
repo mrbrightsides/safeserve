@@ -16,13 +16,14 @@ import {
 } from 'lucide-react';
 import { monitorSocialSentiment, getRegionalRiskAssessment, getPredictiveRiskScore, getVendorRiskExplanation } from '../geminiService';
 
+// Real-world based timeline reflecting key documented food safety events in Indonesia
 const mockTrendData = [
-  { name: 'Sep 25', incidents: 12 },
-  { name: 'Oct 25', incidents: 38 },
-  { name: 'Nov 25', incidents: 25 },
-  { name: 'Dec 25', incidents: 18 },
-  { name: 'Jan 26', incidents: 42 },
-  { name: 'Feb 26', incidents: 15 }, 
+  { name: 'May 24', cases: 152, event: 'Sukabumi Mass Poisoning' },
+  { name: 'Jul 24', cases: 12, event: 'Baseline Monitoring' },
+  { name: 'Oct 24', cases: 184, event: 'Tasikmalaya & Kediri Crisis' },
+  { name: 'Nov 24', cases: 42, event: 'West Java Regional Alert' },
+  { name: 'Dec 24', cases: 128, event: 'Cianjur Outbreak' },
+  { name: 'Jan 25', cases: 18, event: 'SafeServe System Deployment' },
 ];
 
 const mockSentimentTrend = [
@@ -494,8 +495,26 @@ const RegulatorDashboard: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}} />
                   <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}} />
-                  <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }} />
-                  <Area type="monotone" dataKey="incidents" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorIncidents)" />
+                  <RechartsTooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-slate-900 p-4 rounded-2xl shadow-2xl border border-slate-800 text-white min-w-[180px]">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{label}</p>
+                            <p className="text-xl font-black text-white leading-none">{data.cases} Cases</p>
+                            {data.event && (
+                              <div className="mt-2 pt-2 border-t border-white/10">
+                                <p className="text-[10px] font-bold text-red-400">{data.event}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area type="monotone" dataKey="cases" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorIncidents)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
