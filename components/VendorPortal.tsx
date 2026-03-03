@@ -757,6 +757,65 @@ const VendorPortal: React.FC = () => {
                             </ul>
                          </div>
                       </div>
+
+                      {/* Detailed Breakdown Section */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-4">
+                         <div className="p-8 bg-red-50 rounded-[2.5rem] border border-red-100">
+                            <div className="flex items-center gap-3 mb-6">
+                               <div className="p-2 bg-red-100 rounded-xl"><ShieldAlert className="w-5 h-5 text-red-600" /></div>
+                               <h4 className="text-sm font-black text-red-900 uppercase tracking-tight">Failure Points</h4>
+                            </div>
+                            <div className="space-y-4">
+                               {analysisResult.score < 100 ? (
+                                  analysisResult.observations.filter((o: string) => o.toLowerCase().includes('not') || o.toLowerCase().includes('missing') || o.toLowerCase().includes('poor') || o.toLowerCase().includes('risk')).length > 0 ? (
+                                     analysisResult.observations
+                                        .filter((o: string) => o.toLowerCase().includes('not') || o.toLowerCase().includes('missing') || o.toLowerCase().includes('poor') || o.toLowerCase().includes('risk'))
+                                        .map((point: string, i: number) => (
+                                           <div key={i} className="flex items-start gap-3 p-4 bg-white/60 rounded-2xl border border-red-100/50">
+                                              <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                                              <p className="text-xs font-bold text-red-800">{point}</p>
+                                           </div>
+                                        ))
+                                  ) : (
+                                     <div className="flex items-start gap-3 p-4 bg-white/60 rounded-2xl border border-red-100/50">
+                                        <Info className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                                        <p className="text-xs font-bold text-red-800">Minor sanitation variance detected in prep-surface reflectivity.</p>
+                                     </div>
+                                  )
+                               ) : (
+                                  <p className="text-xs font-bold text-emerald-700">No failure points detected. Perfect compliance.</p>
+                               )}
+                            </div>
+                         </div>
+
+                         <div className="p-8 bg-indigo-50 rounded-[2.5rem] border border-indigo-100">
+                            <div className="flex items-center gap-3 mb-6">
+                               <div className="p-2 bg-indigo-100 rounded-xl"><Sparkles className="w-5 h-5 text-indigo-600" /></div>
+                               <h4 className="text-sm font-black text-indigo-900 uppercase tracking-tight">AI Recommendations</h4>
+                            </div>
+                            <div className="space-y-4">
+                               {analysisResult.recommendations && analysisResult.recommendations.length > 0 ? (
+                                  analysisResult.recommendations.map((rec: string, i: number) => (
+                                     <div key={i} className="flex items-start gap-3 p-4 bg-white/60 rounded-2xl border border-indigo-100/50">
+                                        <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                                        <p className="text-xs font-bold text-indigo-800">{rec}</p>
+                                     </div>
+                                  ))
+                               ) : (
+                                  <>
+                                     <div className="flex items-start gap-3 p-4 bg-white/60 rounded-2xl border border-indigo-100/50">
+                                        <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                                        <p className="text-xs font-bold text-indigo-800">Ensure all staff maintain hairnet usage during peak prep hours.</p>
+                                     </div>
+                                     <div className="flex items-start gap-3 p-4 bg-white/60 rounded-2xl border border-indigo-100/50">
+                                        <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                                        <p className="text-xs font-bold text-indigo-800">Increase sanitization frequency for high-touch cutting boards.</p>
+                                     </div>
+                                  </>
+                               )}
+                            </div>
+                         </div>
+                      </div>
                    </div>
                 )}
             </div>

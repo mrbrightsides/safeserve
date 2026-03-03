@@ -422,8 +422,10 @@ const SustainabilityPortal: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={mockVendorWaste}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontBold: '900', fill: '#94a3b8'}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontBold: '900', fill: '#94a3b8'}} unit="%" />
+                  {/* Changed fontBold to fontWeight to fix SVG type errors */}
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: '900', fill: '#94a3b8'}} />
+                  {/* Changed fontBold to fontWeight to fix SVG type errors */}
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: '900', fill: '#94a3b8'}} unit="%" />
                   <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px' }} />
                   <Bar dataKey="waste" radius={[12, 12, 0, 0]}>
                     {mockVendorWaste.map((entry, index) => (
