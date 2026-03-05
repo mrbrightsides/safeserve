@@ -9,9 +9,10 @@ import {
   Droplets, Utensils, AlertTriangle, ChevronRight, Info, Zap, Globe,
   Package, History, BarChart3, Clock, Target, Loader2, CheckCircle2, 
   ArrowRight, ShieldCheck, Database, Fingerprint, Lock, Layers, RefreshCw,
-  Cpu, Gavel, Microscope, Network, Shield, HelpCircle
+  Cpu, Gavel, Microscope, Network, Shield, HelpCircle, Coins, Heart,
+  ArrowDownRight, PieChart
 } from 'lucide-react';
-import { getSustainabilityImpact, getSustainabilityActions } from '../geminiService';
+import { getSustainabilityImpact, getSustainabilityActions, getAIPortionInsights } from '../geminiService';
 
 const mockVendorWaste = [
   { name: 'Bunda Catering', waste: 8.2 },
@@ -24,6 +25,7 @@ const mockVendorWaste = [
 const SustainabilityPortal: React.FC = () => {
   const [impact, setImpact] = useState<any>(null);
   const [actions, setActions] = useState<any[]>([]);
+  const [portionInsights, setPortionInsights] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [processingState, setProcessingState] = useState<'IDLE' | 'APPLYING' | 'SIMULATING' | 'SUCCESS'>('IDLE');
@@ -32,12 +34,14 @@ const SustainabilityPortal: React.FC = () => {
 
   const fetchImpactAndActions = async () => {
     setIsLoading(true);
-    const [impactRes, actionsRes] = await Promise.all([
+    const [impactRes, actionsRes, insightsRes] = await Promise.all([
       getSustainabilityImpact(),
-      getSustainabilityActions()
+      getSustainabilityActions(),
+      getAIPortionInsights()
     ]);
     setImpact(impactRes);
     setActions(actionsRes);
+    setPortionInsights(insightsRes);
     setIsLoading(false);
   };
 
@@ -169,17 +173,130 @@ const SustainabilityPortal: React.FC = () => {
       {/* KPI Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <KPIItem label="Waste Rate" value="11.4%" sub="-2.1% from LW" icon={<Scale className="text-emerald-600" />} />
-        <KPIItem label="Meals Wasted" value="4.2k" sub="Est. This Week" icon={<Utensils className="text-red-500" />} color="bg-red-50" />
-        <KPIItem label="Menu Waste Risk" value="High" sub="Fish Stew Alert" icon={<AlertTriangle className="text-orange-500" />} />
-        <KPIItem label="Sustainability ROI" value="92/100" sub="System Efficiency" icon={<Leaf className="text-emerald-600" />} />
+        <KPIItem label="Meals Recovered" value="1.2M" sub="Total Volume (YTD)" icon={<Utensils className="text-blue-600" />} color="bg-blue-50" />
+        <KPIItem label="Budget Saved" value="Rp 4.2B" sub="Fiscal Efficiency" icon={<Coins className="text-amber-600" />} color="bg-amber-50" />
+        <KPIItem label="Lives Protected" value="850k" sub="Student Reach" icon={<Heart className="text-red-500" />} />
       </div>
 
+      {/* Beyond Safety: Double Bottom Line Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Main Recommendation Column */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          <div className="bg-slate-900 p-8 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden border border-slate-800">
+        <div className="lg:col-span-12">
+          <div className="bg-slate-900 p-10 rounded-[4rem] text-white shadow-2xl relative overflow-hidden border border-slate-800">
+            <div className="absolute top-0 right-0 p-16 opacity-5 pointer-events-none -rotate-12"><Globe className="w-96 h-96 text-emerald-400" /></div>
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 relative z-10">
+              <div className="flex items-center gap-6">
+                <div className="p-5 bg-emerald-600 rounded-3xl shadow-2xl shadow-emerald-500/20">
+                  <Leaf className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-4xl font-black tracking-tighter">Beyond Safety: Sustainability & Fiscal Responsibility</h3>
+                  <p className="text-xs text-slate-500 font-black uppercase tracking-widest mt-2">Active Governance reduces waste and healthcare costs simultaneously.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                  <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">System Status</span>
+                  <span className="text-sm font-black text-emerald-400 tracking-tight">REAL-TIME SYNC</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+              {/* Waste Reduction Chart */}
+              <div className="md:col-span-2 bg-white/5 border border-white/10 p-10 rounded-[3rem] hover:bg-white/10 transition-all">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-red-500/20 rounded-xl"><TrendingDown className="w-5 h-5 text-red-400" /></div>
+                    <h4 className="text-xl font-black tracking-tight">Food Waste Reduction Trend</h4>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-4xl font-black text-red-400 tracking-tighter">-15%</span>
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Via AI-portion calibration</p>
+                  </div>
+                </div>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={[
+                      { name: 'W1', waste: 25 },
+                      { name: 'W2', waste: 22 },
+                      { name: 'W3', waste: 19 },
+                      { name: 'W4', waste: 15 },
+                    ]}>
+                      <defs>
+                        <linearGradient id="colorWaste" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
+                      <XAxis dataKey="name" hide />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                      <Area type="monotone" dataKey="waste" stroke="#ef4444" strokeWidth={4} fillOpacity={1} fill="url(#colorWaste)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Recovery & ROI Stats */}
+              <div className="space-y-6">
+                <div className="p-8 bg-blue-600/20 border border-blue-500/30 rounded-[2.5rem] flex flex-col items-center text-center group hover:bg-blue-600/30 transition-all">
+                  <div className="p-4 bg-blue-600 rounded-2xl mb-4 shadow-xl shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                    <RefreshCw className="w-8 h-8 text-white" />
+                  </div>
+                  <h5 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Recovery</h5>
+                  <p className="text-3xl font-black text-white tracking-tighter">1.2M Meals</p>
+                  <p className="text-[9px] font-bold text-blue-300 mt-1">Recovered and redistributed.</p>
+                </div>
+
+                <div className="p-8 bg-amber-600/20 border border-amber-500/30 rounded-[2.5rem] flex flex-col items-center text-center group hover:bg-amber-600/30 transition-all">
+                  <div className="p-4 bg-amber-600 rounded-2xl mb-4 shadow-xl shadow-amber-500/20 group-hover:scale-110 transition-transform">
+                    <Coins className="w-8 h-8 text-white" />
+                  </div>
+                  <h5 className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">ROI</h5>
+                  <p className="text-3xl font-black text-white tracking-tighter">Double Bottom Line</p>
+                  <p className="text-[9px] font-bold text-amber-300 mt-1">Saving Lives + Saving Budget.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Portion Calibration Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-4">
+          <div className="bg-white p-10 rounded-[3.5rem] border border-gray-200 shadow-sm h-full flex flex-col">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="p-4 bg-indigo-50 rounded-2xl"><PieChart className="w-6 h-6 text-indigo-600" /></div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">AI Portion Insights</h3>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Calibration for Vendors</p>
+              </div>
+            </div>
+            <div className="space-y-4 flex-1">
+              {portionInsights.map((insight, i) => (
+                <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-black text-slate-900">{insight.menu}</span>
+                    <span className="text-[9px] font-black text-red-500 uppercase">{insight.feedback}</span>
+                  </div>
+                  <p className="text-[11px] font-bold text-slate-500 leading-tight mb-3">{insight.advice}</p>
+                  <div className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 uppercase">
+                    <TrendingDown className="w-3 h-3" /> {insight.impact}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="w-full mt-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100">
+              Apply All Calibrations
+            </button>
+          </div>
+        </div>
+
+        <div className="lg:col-span-8">
+          <div className="bg-white p-10 rounded-[3.5rem] border border-gray-200 shadow-sm transition-all hover:shadow-xl">
             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none -rotate-12"><Layers className="w-72 h-72" /></div>
             
             <div className="flex items-center justify-between mb-10 relative z-10">

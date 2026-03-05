@@ -1,7 +1,7 @@
 
-  import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 // Circuit breaker state to prevent spamming the API when quota is exhausted
 let quotaExhaustedUntil = 0;
@@ -403,6 +403,43 @@ export const getSustainabilityActions = async () => {
                     score: { type: Type.STRING }
                   }
                 }
+              }
+            }
+          }
+        }
+      });
+      return JSON.parse(response.text || '[]');
+    });
+  } catch (error) {
+    return fallback;
+  }
+};
+
+/**
+ * Provides AI-driven portion calibration insights for vendors.
+ */
+export const getAIPortionInsights = async () => {
+  const fallback = [
+    { menu: "Nasi Putih", feedback: "20% leftover", advice: "Reduce portion by 15% in West Java clusters.", impact: "Rp 1.2M saved/mo" },
+    { menu: "Ikan Goreng", feedback: "100% consumed", advice: "Maintain current portion; high nutritional ROI.", impact: "Optimal" },
+    { menu: "Sayur Sop", feedback: "15% leftover", advice: "Adjust seasoning; children prefer less celery.", impact: "Rp 400k saved/mo" }
+  ];
+  try {
+    return await fetchWithRetry(async () => {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: "Analyze school lunch feedback for the MBG program and provide 3 portion calibration insights for vendors. Focus on waste reduction and fiscal savings.",
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                menu: { type: Type.STRING },
+                feedback: { type: Type.STRING },
+                advice: { type: Type.STRING },
+                impact: { type: Type.STRING }
               }
             }
           }
