@@ -1,742 +1,839 @@
-import React, { useState, useEffect, useMemo } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { 
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
-  AreaChart, Area, LineChart, Line, Legend, BarChart, Bar, Cell, PieChart, Pie
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  AreaChart, Area
 } from 'recharts';
 import { 
-  MapPin, AlertTriangle, CheckCircle, Users, Activity, ExternalLink, 
-  MessageSquare, ShieldAlert, Loader2, TrendingUp, TrendingDown, Info, Map as MapIcon,
-  AlertOctagon, Store, History, Zap, Search, Eye, Globe, ChevronRight,
-  ShieldCheck, AlertCircle, X, BellRing, ArrowRight, FileText, Newspaper,
-  LocateFixed, Shield, BarChart3, Clock, UserCheck, CalendarDays, Filter,
-  ThumbsUp, ThumbsDown, Minus, Tag, Radio, Megaphone, Share2, BrainCircuit,
-  Fingerprint, Database, Cpu, Layers, Workflow, Siren, Download, Info as InfoIcon,
-  Database as DatabaseIcon, Target, Sparkles, Gauge, School, RefreshCw,
-  CloudOff, CloudRain, ShieldQuestion, ThermometerSnowflake, BarChart as BarChartIcon
+  Scale, Leaf, TrendingUp, TrendingDown, Sparkles, BrainCircuit, Activity,
+  Droplets, Utensils, AlertTriangle, ChevronRight, Info, Zap, Globe,
+  Package, History, BarChart3, Clock, Target, Loader2, CheckCircle2, 
+  ArrowRight, ShieldCheck, Database, Fingerprint, Lock, Layers, RefreshCw,
+  Cpu, Gavel, Microscope, Network, Shield, HelpCircle, Coins, Heart,
+  ArrowDownRight, PieChart, BookOpen
 } from 'lucide-react';
-import { monitorSocialSentiment, getRegionalRiskAssessment, getPredictiveRiskScore, getVendorRiskExplanation } from '../geminiService';
+import { getSustainabilityImpact, getSustainabilityActions, getAIPortionInsights } from '../geminiService';
 
-const mockTrendData = [
-  { name: 'Sep 25', incidents: 12 },
-  { name: 'Oct 25', incidents: 38 },
-  { name: 'Nov 25', incidents: 25 },
-  { name: 'Dec 25', incidents: 18 },
-  { name: 'Jan 26', incidents: 42 },
-  { name: 'Feb 26', incidents: 15 }, 
+const mockVendorWaste = [
+  { name: 'Bunda Catering', waste: 8.2 },
+  { name: 'Dapur Sehat', waste: 15.4 },
+  { name: 'Lembang Co-op', waste: 5.1 },
+  { name: 'Barokah Foods', waste: 22.8 },
+  { name: 'Sari Rasa', waste: 11.2 },
 ];
 
-const mockSentimentTrend = [
-  { time: '08:00', pos: 80, neg: 20 },
-  { time: '10:00', pos: 75, neg: 25 },
-  { time: '12:00', pos: 40, neg: 60 },
-  { time: '14:00', pos: 30, neg: 70 },
-  { time: '16:00', pos: 35, neg: 65 },
-  { time: '18:00', pos: 50, neg: 50 },
-];
+const SustainabilityPortal: React.FC = () => {
+  const [impact, setImpact] = useState<any>(null);
+  const [actions, setActions] = useState<any[]>([]);
+  const [portionInsights, setPortionInsights] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [processingState, setProcessingState] = useState<'IDLE' | 'APPLYING' | 'SIMULATING' | 'SUCCESS'>('IDLE');
+  const [showSimPanel, setShowSimPanel] = useState(false);
+  const [simData, setSimData] = useState<any>(null);
+  const [showMethodology, setShowMethodology] = useState(false);
+  const [methodologyTopic, setMethodologyTopic] = useState<string | null>(null);
 
-const mockBlockchainLogs = [
-  { h: '0x8f2a...e912', t: '14:21:05', a: 'INCIDENT_LOCK', s: 'Verified' },
-  { h: '0x3c1b...f0a1', t: '14:18:22', a: 'COMPLIANCE_SYNC', s: 'Verified' },
-  { h: '0x9d4e...d22b', t: '14:05:11', a: 'VENDOR_AUDIT_SIG', s: 'Verified' },
-  { h: '0xa2c3...119c', t: '13:55:40', a: 'IOT_TELEMETRY', s: 'Verified' },
-];
-
-const mockSocialPosts = [
-  { text: "My son just came home from SDN 01 with a stomach ache after MBG lunch. Anyone else? #MBG #Jakarta", sentiment: 'negative', topic: 'health' },
-  { text: "The food at SMPN 12 today smelled a bit weird. The rice was slightly yellow. #FoodSafety #MBG", sentiment: 'negative', topic: 'quality' },
-  { text: "Feeling great after the free meal today! So nutritious and the portion is huge. #HealthyIndonesia", sentiment: 'positive', topic: 'general' },
-];
-
-interface Notification {
-  id: string;
-  msg: string;
-  type: 'INCIDENT' | 'SENTIMENT' | 'IOT' | 'SYSTEM';
-  severity: 'CRITICAL' | 'WARNING' | 'INFO';
-}
-
-const SentimentGauge = ({ score }: { score: number }) => {
-  const normalizedScore = Math.min(Math.max(score, 0), 10);
-  const rotation = (normalizedScore / 10) * 180 - 90;
-  const radius = 40;
-  const circumference = Math.PI * radius; 
-  const dashOffset = circumference - (normalizedScore / 10) * circumference;
-  const getColor = () => normalizedScore >= 7 ? '#ef4444' : normalizedScore >= 4 ? '#f59e0b' : '#10b981';
-
-  return (
-    <div className="relative flex flex-col items-center justify-center pt-10 pb-4 w-full">
-      <div className="relative w-56 h-28">
-        <svg viewBox="0 0 100 55" className="w-full h-full drop-shadow-sm">
-          <path d="M 10,50 A 40,40 0 0,1 90,50" fill="none" stroke="#f1f5f9" strokeWidth="10" strokeLinecap="round" />
-          <path d="M 10,50 A 40,40 0 0,1 90,50" fill="none" stroke={getColor()} strokeWidth="10" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset} className="transition-all duration-1000" />
-        </svg>
-        <div className="absolute bottom-[-2px] left-1/2 w-[2px] h-[46px] origin-bottom transition-all duration-1000" style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}>
-          <div className="w-[2px] h-[38px] rounded-full" style={{ backgroundColor: getColor() }} />
-        </div>
-      </div>
-      <div className="mt-4 text-center">
-        <div className="text-4xl font-black tracking-tighter" style={{ color: getColor() }}>{normalizedScore.toFixed(1)}</div>
-        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-[-4px]">Risk Coefficient</div>
-      </div>
-    </div>
-  );
-};
-
-const RegulatorDashboard: React.FC = () => {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isExplainingVendor, setIsExplainingVendor] = useState(false);
-  const [isSimulationMode, setIsSimulationMode] = useState(false);
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [showConfidenceModal, setShowConfidenceModal] = useState(false);
-  const [predictiveData, setPredictiveData] = useState<any>(null);
-  const [vendorRiskInfo, setVendorRiskInfo] = useState<any>(null);
-  const [regionalRisks, setRegionalRisks] = useState<any[]>([]);
-  const [isRisksLoading, setIsRisksLoading] = useState(false);
-  const [riskSources, setRiskSources] = useState<any[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [trend, setTrend] = useState<'up' | 'down'>('up');
-
-  const [riskInputs, setRiskInputs] = useState({
-    schoolReports: 3,
-    avgSeverity: 6.5,
-    sentimentSpike: 25,
-    hygieneDeficit: 8,
-    iotAnomalies: 2
-  });
-
-  const [vendorFactors, setVendorFactors] = useState({
-    incidentCount: 1,
-    hygieneScore: 78,
-    tempAnomalies: 4
-  });
-
-  const calculateOutbreakRisk = (inputs: typeof riskInputs) => {
-    const score = Math.min(100, (
-      (Math.min(inputs.schoolReports, 20) * 5 * 0.3) + 
-      (inputs.avgSeverity * 10 * 0.2) + 
-      (inputs.sentimentSpike * 0.2) + 
-      (inputs.hygieneDeficit * 1.5) + 
-      (inputs.iotAnomalies * 10 * 0.15)
-    ));
-    return Math.round(score);
-  };
-
-  const addNotification = (notif: Notification) => setNotifications(prev => [notif, ...prev.slice(0, 3)]);
-
-  const triggerSimulation = () => {
-    setIsSimulationMode(!isSimulationMode);
-    if (!isSimulationMode) {
-      const simInputs = {
-        schoolReports: 12,
-        avgSeverity: 8.2,
-        sentimentSpike: 65,
-        hygieneDeficit: 22,
-        iotAnomalies: 7
-      };
-      setRiskInputs(simInputs);
-      setTrend('up');
-      addNotification({
-        id: `SIM-${Date.now()}`,
-        msg: "DEMO: Simulated Outbreak detected in West Jakarta cluster.",
-        type: 'INCIDENT',
-        severity: 'CRITICAL'
-      });
-      setPredictiveData({
-        score: calculateOutbreakRisk(simInputs),
-        riskLevel: "CRITICAL",
-        explanation: ["High frequency of school reports (12+).", "IoT telemetry showing widespread fridge failures.", "Social sentiment reach: 25k users reporting illness."],
-        recommendedThreshold: 80
-      });
-      // Also simulate high vendor risk
-      handleVendorAnalysis({ incidentCount: 5, hygieneScore: 42, tempAnomalies: 12 });
-    } else {
-      const defaultInputs = {
-        schoolReports: 3,
-        avgSeverity: 6.5,
-        sentimentSpike: 25,
-        hygieneDeficit: 8,
-        iotAnomalies: 2
-      };
-      setRiskInputs(defaultInputs);
-      setTrend('down');
-      fetchPredictiveScore();
-      handleVendorAnalysis({ incidentCount: 1, hygieneScore: 78, tempAnomalies: 4 });
-    }
-  };
-
-  const fetchPredictiveScore = async () => {
-    setIsAnalyzing(true);
-    const result = await getPredictiveRiskScore({ 
-      ...riskInputs, 
-      calculatedBase: calculateOutbreakRisk(riskInputs) 
-    });
-    setPredictiveData(result);
-    setIsAnalyzing(false);
-  };
-
-  const handleVendorAnalysis = async (factors?: typeof vendorFactors) => {
-    setIsExplainingVendor(true);
-    const targetFactors = factors || vendorFactors;
-    const result = await getVendorRiskExplanation(targetFactors);
-    setVendorRiskInfo(result);
-    setIsExplainingVendor(false);
-  };
-
-  const fetchRisks = async () => {
-    setIsRisksLoading(true);
-    try {
-      const result = await getRegionalRiskAssessment();
-      setRegionalRisks(result.data);
-      setRiskSources(result.sources || []);
-    } finally {
-      setIsRisksLoading(false);
-    }
+  const fetchImpactAndActions = async () => {
+    setIsLoading(true);
+    const [impactRes, actionsRes, insightsRes] = await Promise.all([
+      getSustainabilityImpact(),
+      getSustainabilityActions(),
+      getAIPortionInsights()
+    ]);
+    setImpact(impactRes);
+    setActions(actionsRes);
+    setPortionInsights(insightsRes);
+    setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchPredictiveScore();
-    fetchRisks();
-    handleVendorAnalysis();
+    fetchImpactAndActions();
   }, []);
 
+  const handleApplyAction = (id: string) => {
+    setActiveActionId(id);
+    setProcessingState('APPLYING');
+    setTimeout(() => {
+      setProcessingState('SUCCESS');
+      setActions(prev => prev.map(a => a.id === id ? { 
+        ...a, 
+        status: 'Verified Effective', 
+        verifiedDelta: { waste: "-9.1%", improvement: "Significant", confidence: "0.91" } 
+      } : a));
+      setTimeout(() => {
+        setProcessingState('IDLE');
+        setActiveActionId(null);
+      }, 3000);
+    }, 2000);
+  };
+
+  const handleSimulate = (action: any) => {
+    setActiveActionId(action.id);
+    setProcessingState('SIMULATING');
+    setTimeout(() => {
+      setSimData(action.projectedDelta);
+      setShowSimPanel(true);
+      setProcessingState('IDLE');
+    }, 1500);
+  };
+
+  const openMethodology = (topic: string) => {
+    setMethodologyTopic(topic);
+    setShowMethodology(true);
+  };
+
+  const methodologyData: Record<string, any> = {
+    'Waste Rate': {
+      title: 'Food Waste Reduction Methodology',
+      how: 'We use AI Visual Audits of "Plate Waste." Schools upload photos of disposal bins or leftover trays after lunch. Our AI (Gemini) analyzes these images to estimate the volume of wasted food versus the total portions served.',
+      logic: 'By aggregating this "visual data" across thousands of schools, the system identifies specific menus that are consistently rejected. We then push Portion Calibration instructions to vendors to adjust their next batch, which directly reduces the waste percentage.'
+    },
+    'Meals Recovered': {
+      title: 'Meals Recovered Calculation',
+      how: 'This is tracked through our Surplus Management Ledger. When a school reports lower attendance (e.g., due to a field trip or rain), the vendor logs the "Surplus Safe Meals" in the portal.',
+      logic: 'The system then triggers a Recovery Alert to nearby community centers or food banks. Once the redistribution is confirmed by the receiving party, the "recovered" volume is added to our national sustainability total.'
+    },
+    'Budget Saved': {
+      title: 'Fiscal Efficiency Formula',
+      how: 'This is calculated based on two factors: 1. Direct Savings: (Baseline Waste % - Current Waste %) × Total Program Budget. 2. Indirect Savings: Avoided Healthcare Cost by preventing food poisoning incidents.',
+      logic: 'By reducing waste from 25% to 10%, we are effectively saving 15% of the procurement budget. We also estimate the medical cost avoided per prevented incident based on national health data.'
+    },
+    'Lives Protected': {
+      title: 'Lives Protected Metric',
+      how: 'This represents the Reach of Verified Safety. It is the total number of students served by vendors who have a "Verified Safe" status.',
+      logic: 'A "Verified Safe" status means the vendor has passed all AI hygiene audits, cold-chain sensor checks, and has zero active safety alerts. This ensures that every meal served to these students meets the highest safety standards.'
+    }
+  };
+
   return (
-    <div className="space-y-6 pb-20 max-w-7xl mx-auto text-left animate-in fade-in duration-700">
+    <div className="max-w-7xl mx-auto space-y-8 text-left animate-in fade-in duration-700 pb-20">
       
-      {/* Confidence Data Modal */}
-      {showConfidenceModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-600 rounded-xl"><Gauge className="text-white w-5 h-5" /></div>
-                <h3 className="text-xl font-black">AI Confidence Metrics</h3>
-              </div>
-              <button onClick={() => setShowConfidenceModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X className="w-6 h-6" /></button>
-            </div>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Model Confidence</span>
-                  <span className="text-2xl font-black text-indigo-600">94.2%</span>
+      {/* Methodology Modal */}
+      {showMethodology && methodologyTopic && methodologyData[methodologyTopic] && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xl animate-in fade-in">
+          <div className="bg-white p-10 rounded-[3.5rem] shadow-[0_50px_120px_rgba(0,0,0,0.4)] w-full max-w-2xl border border-slate-100 relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none -rotate-12"><BookOpen className="w-64 h-64 text-indigo-600" /></div>
+             
+             <div className="flex justify-between items-center mb-10 relative z-10">
+                <div className="flex items-center gap-5">
+                  <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-100">
+                    <Info className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-gray-900 leading-none">{methodologyData[methodologyTopic].title}</h3>
+                    <p className="text-xs text-indigo-600 font-black uppercase tracking-widest mt-2">Data Source & Calculation Logic</p>
+                  </div>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Data Freshness</span>
-                  <span className="text-2xl font-black text-emerald-600">Live</span>
-                </div>
-              </div>
+                <button 
+                  onClick={() => setShowMethodology(false)} 
+                  className="p-3 hover:bg-slate-100 rounded-2xl transition-all"
+                >
+                  <RefreshCw className="w-6 h-6 text-slate-300" />
+                </button>
+             </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-600">
-                  <span>Logic Consistency</span>
-                  <span>High (98%)</span>
+             <div className="space-y-8 relative z-10">
+                <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
+                   <div className="flex items-center gap-2 mb-4">
+                     <Target className="w-4 h-4 text-indigo-600" />
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">The "How" (Methodology)</span>
+                   </div>
+                   <p className="text-base font-bold text-slate-700 leading-relaxed">
+                     {methodologyData[methodologyTopic].how}
+                   </p>
                 </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-indigo-600 h-full w-[98%]" />
-                </div>
-                
-                <div className="flex justify-between items-center text-xs font-bold text-slate-600">
-                  <span>Grounding Relevance</span>
-                  <span>91%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-emerald-600 h-full w-[91%]" />
-                </div>
-              </div>
 
-              <div className="p-5 bg-indigo-50 rounded-[2rem] border border-indigo-100">
-                <p className="text-[10px] text-indigo-800 font-bold leading-relaxed">
-                  Explanation generated using RAG (Retrieval-Augmented Generation) mapping vendor hygiene audits to current BGN safety standards. Inference token usage optimized for sub-500ms latency.
-                </p>
-              </div>
+                <div className="p-8 bg-emerald-50 rounded-[2.5rem] border border-emerald-100">
+                   <div className="flex items-center gap-2 mb-4">
+                     <BrainCircuit className="w-4 h-4 text-emerald-600" />
+                     <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">The Logic (AI Synthesis)</span>
+                   </div>
+                   <p className="text-base font-bold text-emerald-800 leading-relaxed italic">
+                     {methodologyData[methodologyTopic].logic}
+                   </p>
+                </div>
+             </div>
 
-              <button 
-                onClick={() => setShowConfidenceModal(false)}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg"
-              >
-                Close Metrics
-              </button>
-            </div>
+             <button 
+               onClick={() => setShowMethodology(false)} 
+               className="w-full mt-10 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
+             >
+               Understood, Close
+             </button>
           </div>
         </div>
       )}
 
-      {/* Simulation & Status Banner */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 flex items-center justify-between p-4 bg-slate-900 rounded-[2rem] border border-slate-700 shadow-xl overflow-hidden relative">
-          <div className="flex items-center gap-4 relative z-10">
-            <div className={`p-3 rounded-2xl ${isSimulationMode ? 'bg-red-600 animate-pulse shadow-lg shadow-red-500/50' : 'bg-indigo-600'}`}>
-              {isSimulationMode ? <Siren className="w-6 h-6 text-white" /> : <Sparkles className="w-6 h-6 text-white" />}
+      {/* Simulation Delta Panel (Decision Support Overlay) */}
+      {showSimPanel && simData && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white p-10 rounded-[3rem] shadow-[0_40px_100px_rgba(0,0,0,0.3)] w-full max-w-2xl border border-slate-100">
+             <div className="flex justify-between items-center mb-10">
+                <div className="flex items-center gap-5">
+                  <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-100 rotate-3 transition-transform hover:rotate-0">
+                    <Zap className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-gray-900 leading-none">Simulation Delta Panel</h3>
+                    <p className="text-xs text-indigo-600 font-black uppercase tracking-widest mt-2">7-Day Projected Impact Analysis</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => { setShowSimPanel(false); setActiveActionId(null); }} 
+                  className="p-3 hover:bg-slate-100 rounded-2xl transition-all hover:scale-110 active:scale-90"
+                >
+                  <History className="w-6 h-6 text-slate-300" />
+                </button>
+             </div>
+
+             <div className="grid grid-cols-2 gap-6 mb-10">
+                <DeltaCard label="Waste Reduction" value={simData.waste} color="text-red-500" sub="Forecasted Delta" icon={<Scale className="w-4 h-4" />} />
+                <DeltaCard label="CO₂ Saved" value={simData.co2} color="text-emerald-500" sub="Carbon Offset Est." icon={<Leaf className="w-4 h-4" />} />
+                <DeltaCard label="Meals Recovered" value={simData.meals} color="text-blue-500" sub="Total Volume (7d)" icon={<Utensils className="w-4 h-4" />} />
+                <DeltaCard label="Vendor Score" value={simData.score} color="text-indigo-600" sub="Governance Boost" icon={<TrendingUp className="w-4 h-4" />} />
+             </div>
+
+             <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 mb-10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5"><BrainCircuit className="w-24 h-24" /></div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Info className="w-4 h-4 text-indigo-600" />
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Decision Support Logic</span>
+                </div>
+                <p className="text-sm font-bold text-slate-600 leading-relaxed italic">
+                  "Advanced Monte Carlo modeling suggests a high probability of these results based on current school-district demand curves. Proceeding will lock these targets into the next audit cycle."
+                </p>
+             </div>
+
+             <div className="flex gap-4">
+                <button 
+                  onClick={() => { setShowSimPanel(false); setActiveActionId(null); }} 
+                  className="flex-1 py-5 bg-gray-100 text-gray-500 rounded-3xl font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition-all active:scale-95"
+                >
+                  Discard Simulation
+                </button>
+                <button 
+                  onClick={() => { handleApplyAction(activeActionId!); setShowSimPanel(false); }} 
+                  className="flex-[2] py-5 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-3"
+                >
+                  Commit Governance Policy <ArrowRight className="w-4 h-4" />
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Governance Mode Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-8 bg-slate-900 rounded-[3rem] border border-slate-800 shadow-2xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000"><Network className="w-64 h-64 text-indigo-400" /></div>
+          <div className="flex items-center gap-5 relative z-10">
+            <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-500/20">
+              <Gavel className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h3 className="text-white font-black text-lg tracking-tight">System Simulation Mode</h3>
-              <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-widest">{isSimulationMode ? 'Outbreak Scenario Active' : 'Live Monitoring Active'}</p>
+              <h2 className="text-3xl font-black text-white tracking-tight">Active Governance Mode</h2>
+              <div className="flex items-center gap-3 mt-1.5">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">AUTO-POLICY: ENABLED</span>
+                </div>
+                {/* Upgrade: Compliance Mode Badge */}
+                <div className="px-2.5 py-1 bg-indigo-500/10 rounded-lg border border-indigo-500/20 text-[10px] text-indigo-400 font-black uppercase tracking-widest">
+                  BPOM SPEC MODE: ACTIVE
+                </div>
+              </div>
             </div>
           </div>
-          <button onClick={triggerSimulation} className="px-8 py-3 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95 shadow-lg">
-            {isSimulationMode ? 'Stop Simulation' : 'Simulate Outbreak'}
-          </button>
+          <div className="flex gap-4 relative z-10">
+             <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-center hover:bg-white/10 transition-colors">
+                <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Policy Latency</span>
+                <span className="text-sm font-black text-white tracking-tight">42ms</span>
+             </div>
+             <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-center hover:bg-white/10 transition-colors">
+                <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Engine Trust</span>
+                <span className="text-sm font-black text-white tracking-tight">0.98</span>
+             </div>
+          </div>
+      </div>
+
+      {/* KPI Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <KPIItem 
+          label="Waste Rate" 
+          value="11.4%" 
+          sub="-2.1% from LW" 
+          icon={<Scale className="text-emerald-600" />} 
+          onInfoClick={() => openMethodology('Waste Rate')}
+        />
+        <KPIItem 
+          label="Meals Recovered" 
+          value="1.2M" 
+          sub="Total Volume (YTD)" 
+          icon={<Utensils className="text-blue-600" />} 
+          color="bg-blue-50" 
+          onInfoClick={() => openMethodology('Meals Recovered')}
+        />
+        <KPIItem 
+          label="Budget Saved" 
+          value="Rp 4.2B" 
+          sub="Fiscal Efficiency" 
+          icon={<Coins className="text-amber-600" />} 
+          color="bg-amber-50" 
+          onInfoClick={() => openMethodology('Budget Saved')}
+        />
+        <KPIItem 
+          label="Lives Protected" 
+          value="850k" 
+          sub="Student Reach" 
+          icon={<Heart className="text-red-500" />} 
+          onInfoClick={() => openMethodology('Lives Protected')}
+        />
+      </div>
+
+      {/* Beyond Safety: Double Bottom Line Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-12">
+          <div className="bg-slate-900 p-10 rounded-[4rem] text-white shadow-2xl relative overflow-hidden border border-slate-800">
+            <div className="absolute top-0 right-0 p-16 opacity-5 pointer-events-none -rotate-12"><Globe className="w-96 h-96 text-emerald-400" /></div>
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 relative z-10">
+              <div className="flex items-center gap-6">
+                <div className="p-5 bg-emerald-600 rounded-3xl shadow-2xl shadow-emerald-500/20">
+                  <Leaf className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-4xl font-black tracking-tighter">Beyond Safety: Sustainability & Fiscal Responsibility</h3>
+                  <p className="text-xs text-slate-500 font-black uppercase tracking-widest mt-2">Active Governance reduces waste and healthcare costs simultaneously.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => openMethodology('Waste Rate')}
+                  className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-center hover:bg-white/10 transition-all flex items-center gap-2"
+                >
+                  <BookOpen className="w-4 h-4 text-emerald-400" />
+                  <span className="text-sm font-black text-emerald-400 tracking-tight">VIEW METHODOLOGY</span>
+                </button>
+                <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
+                  <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">System Status</span>
+                  <span className="text-sm font-black text-emerald-400 tracking-tight">REAL-TIME SYNC</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+              {/* Waste Reduction Chart */}
+              <div className="md:col-span-2 bg-white/5 border border-white/10 p-10 rounded-[3rem] hover:bg-white/10 transition-all">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-red-500/20 rounded-xl"><TrendingDown className="w-5 h-5 text-red-400" /></div>
+                    <h4 className="text-xl font-black tracking-tight">Food Waste Reduction Trend</h4>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-4xl font-black text-red-400 tracking-tighter">-15%</span>
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Via AI-portion calibration</p>
+                  </div>
+                </div>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={[
+                      { name: 'W1', waste: 25 },
+                      { name: 'W2', waste: 22 },
+                      { name: 'W3', waste: 19 },
+                      { name: 'W4', waste: 15 },
+                    ]}>
+                      <defs>
+                        <linearGradient id="colorWaste" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
+                      <XAxis dataKey="name" hide />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                      <Area type="monotone" dataKey="waste" stroke="#ef4444" strokeWidth={4} fillOpacity={1} fill="url(#colorWaste)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Recovery & ROI Stats */}
+              <div className="space-y-6">
+                <div className="p-8 bg-blue-600/20 border border-blue-500/30 rounded-[2.5rem] flex flex-col items-center text-center group hover:bg-blue-600/30 transition-all">
+                  <div className="p-4 bg-blue-600 rounded-2xl mb-4 shadow-xl shadow-blue-500/20 group-hover:scale-110 transition-transform">
+                    <RefreshCw className="w-8 h-8 text-white" />
+                  </div>
+                  <h5 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Recovery</h5>
+                  <p className="text-3xl font-black text-white tracking-tighter">1.2M Meals</p>
+                  <p className="text-[9px] font-bold text-blue-300 mt-1">Recovered and redistributed.</p>
+                </div>
+
+                <div className="p-8 bg-amber-600/20 border border-amber-500/30 rounded-[2.5rem] flex flex-col items-center text-center group hover:bg-amber-600/30 transition-all">
+                  <div className="p-4 bg-amber-600 rounded-2xl mb-4 shadow-xl shadow-amber-500/20 group-hover:scale-110 transition-transform">
+                    <Coins className="w-8 h-8 text-white" />
+                  </div>
+                  <h5 className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">ROI</h5>
+                  <p className="text-3xl font-black text-white tracking-tighter">Double Bottom Line</p>
+                  <p className="text-[9px] font-bold text-amber-300 mt-1">Saving Lives + Saving Budget.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Beneficiaries" value="1.2M" sub="Live Sync" icon={<Users className="text-blue-600" />} />
-        <StatCard title="Predictive Alert" value={predictiveData?.score.toString() || "42"} sub="Risk Score" icon={<BrainCircuit className="text-red-600" />} color="bg-red-50" />
-        <StatCard title="Supply Health" value="94.2%" sub="Verified Log" icon={<ShieldCheck className="text-green-600" />} />
-        <StatCard title="Integrity Uptime" value="99.9%" sub="Block-Sync" icon={<Database className="text-purple-600" />} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* District Outbreak Risk Score Panel */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm relative overflow-hidden group">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="bg-slate-900 p-2.5 rounded-2xl shadow-xl"><Activity className="w-5 h-5 text-white" /></div>
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">District Outbreak Risk Score</h3>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Real-time Hybrid Intelligence (Rule-Based + AI)</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-black text-[10px] tracking-widest transition-all ${trend === 'up' ? 'text-red-600 bg-red-50 border-red-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100'}`}>
-                  {trend === 'up' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                  {trend === 'up' ? 'INCREASING' : 'STABILIZING'}
-                </div>
-                <button 
-                  onClick={() => setShowExplanation(!showExplanation)}
-                  className="px-4 py-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase hover:text-indigo-600 hover:border-indigo-100 transition-all flex items-center gap-2"
-                >
-                  <InfoIcon className="w-4 h-4" /> {showExplanation ? 'Hide Metrics' : 'Breakdown'}
-                </button>
+      {/* AI Portion Calibration Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-4">
+          <div className="bg-white p-10 rounded-[3.5rem] border border-gray-200 shadow-sm h-full flex flex-col">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="p-4 bg-indigo-50 rounded-2xl"><PieChart className="w-6 h-6 text-indigo-600" /></div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">AI Portion Insights</h3>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Calibration for Vendors</p>
               </div>
             </div>
-
-            {isAnalyzing ? (
-              <div className="py-20 flex flex-col items-center justify-center animate-pulse">
-                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Calculating Outbreak Probability...</p>
-              </div>
-            ) : predictiveData && (
-              <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-500">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                  <div className="flex flex-col items-center justify-center p-10 bg-slate-50 rounded-[2.5rem] border border-slate-100 relative overflow-hidden shadow-inner">
-                    <div className="absolute top-0 right-0 p-4 opacity-5"><Zap className="w-12 h-12" /></div>
-                    <div className={`text-7xl font-black tracking-tighter mb-1 transition-colors ${predictiveData.score > 70 ? 'text-red-600' : predictiveData.score > 40 ? 'text-orange-500' : 'text-emerald-500'}`}>
-                      {predictiveData.score}
-                    </div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unified Risk Score</span>
+            <div className="space-y-4 flex-1">
+              {portionInsights.map((insight, i) => (
+                <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-black text-slate-900">{insight.menu}</span>
+                    <span className="text-[9px] font-black text-red-500 uppercase">{insight.feedback}</span>
                   </div>
-
-                  <div className="md:col-span-2 space-y-6 pt-4">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-black text-gray-500 uppercase tracking-tight">Risk Tier: 
-                        <span className={`ml-2 px-2.5 py-0.5 rounded-lg border ${predictiveData.score > 70 ? 'text-red-600 bg-red-50 border-red-200' : 'text-emerald-600 bg-emerald-50 border-emerald-200'}`}>
-                          {predictiveData.riskLevel}
-                        </span>
-                      </span>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">THRESHOLD: {predictiveData.recommendedThreshold || 80}</span>
-                    </div>
-                    
-                    <div className="relative h-6 bg-slate-100 rounded-full overflow-hidden border-4 border-white shadow-sm">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-1000 ease-out ${predictiveData.score > 70 ? 'bg-gradient-to-r from-red-400 to-red-600' : 'bg-gradient-to-r from-emerald-400 to-emerald-600'}`} 
-                        style={{ width: `${predictiveData.score}%` }} 
-                      />
-                      <div className="absolute top-0 bottom-0 w-px bg-slate-300 border-l border-white/50" style={{ left: '80%' }} />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group">
-                         <div className="p-2 bg-white rounded-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all"><School className="w-4 h-4" /></div>
-                         <div><p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Reports</p><p className="text-xs font-black text-gray-900">{riskInputs.schoolReports} Active Incidents</p></div>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100 group">
-                         <div className="p-2 bg-white rounded-xl shadow-sm group-hover:bg-orange-500 group-hover:text-white transition-all"><AlertCircle className="w-4 h-4" /></div>
-                         <div><p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Avg Severity</p><p className="text-xs font-black text-gray-900">{riskInputs.avgSeverity}/10 Intensity</p></div>
-                      </div>
-                    </div>
+                  <p className="text-[11px] font-bold text-slate-500 leading-tight mb-3">{insight.advice}</p>
+                  <div className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 uppercase">
+                    <TrendingDown className="w-3 h-3" /> {insight.impact}
                   </div>
                 </div>
-
-                {showExplanation && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-500">
-                    <div className="p-6 bg-indigo-50 border border-indigo-100 rounded-[2rem] shadow-sm">
-                      <div className="flex items-center gap-2 mb-4">
-                        <BrainCircuit className="w-4 h-4 text-indigo-600" />
-                        <h4 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest">AI Reasoning Breakdown</h4>
-                      </div>
-                      <ul className="space-y-3">
-                        {predictiveData.explanation.map((r: string, i: number) => (
-                          <li key={i} className="text-xs font-bold text-indigo-700 flex items-start gap-2.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-300 mt-1.5 shrink-0" />
-                            {r}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <div className="p-6 bg-white border border-slate-100 rounded-[2rem] shadow-sm">
-                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Layers className="w-4 h-4" /> Metric Weights (Rule-Based)</h4>
-                       <div className="space-y-4">
-                          <RuleMetric label="Reports Volume" value={`${riskInputs.schoolReports} units`} weight="30%" />
-                          <RuleMetric label="Symptom Severity" value={`${riskInputs.avgSeverity}/10`} weight="20%" />
-                          <RuleMetric label="Sentiment Spike" value={`${riskInputs.sentimentSpike}%`} weight="20%" />
-                          <RuleMetric label="Hygiene Deficit" value={`${riskInputs.hygieneDeficit}%`} weight="15%" />
-                          <RuleMetric label="IoT Anomalies" value={`${riskInputs.iotAnomalies} counts`} weight="15%" />
-                       </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+              ))}
+            </div>
+            <button className="w-full mt-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100">
+              Apply All Calibrations
+            </button>
           </div>
+        </div>
 
-          {/* AI Explainability Panel: Why is this vendor high-risk? */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm relative overflow-hidden group min-h-[400px]">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="bg-amber-100 p-2.5 rounded-2xl shadow-sm"><ShieldQuestion className="w-5 h-5 text-amber-600" /></div>
+        <div className="lg:col-span-8">
+          <div className="bg-white p-10 rounded-[3.5rem] border border-gray-200 shadow-sm transition-all hover:shadow-xl">
+            <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none -rotate-12"><Layers className="w-72 h-72" /></div>
+            
+            <div className="flex items-center justify-between mb-10 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-emerald-600 rounded-2xl shadow-lg shadow-emerald-500/20">
+                  <BrainCircuit className="w-6 h-6 text-white" />
+                </div>
                 <div>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">Why is this vendor high-risk?</h3>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Deep AI Insight & Evidence Chain</p>
+                  <h3 className="text-2xl font-black tracking-tight">AI Action Loop Pipeline</h3>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Self-Optimizing Sustainability Engine</p>
                 </div>
               </div>
               <button 
-                onClick={() => handleVendorAnalysis()} 
-                className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-100 rounded-xl text-[10px] font-black uppercase hover:bg-amber-100 transition-all flex items-center gap-2"
+                onClick={fetchImpactAndActions}
+                disabled={isLoading}
+                className="p-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all"
               >
-                {isExplainingVendor ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                Re-Analyze Vendor
+                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
-            {isExplainingVendor ? (
-              <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-                <BrainCircuit className="w-12 h-12 text-amber-500 animate-bounce mb-4" />
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Synthesizing Safety Evidence...</p>
-              </div>
-            ) : vendorRiskInfo && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-in fade-in duration-500">
-                <div className="md:col-span-5 space-y-6">
-                  <div className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] shadow-inner">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                      <Target className="w-3.5 h-3.5" /> Incident Profile
-                    </h4>
-                    <div className="space-y-5">
-                       <RiskFactor icon={<AlertTriangle className="text-red-500" />} label="Recent Reports" value={isSimulationMode ? "5 Units" : "1 Unit"} trend="high" />
-                       <RiskFactor icon={<CheckCircle className="text-amber-500" />} label="Hygiene Baseline" value={isSimulationMode ? "42/100" : "78/100"} trend="low" />
-                       <RiskFactor icon={<ThermometerSnowflake className="text-blue-500" />} label="Temp Anomalies" value={isSimulationMode ? "12 Detects" : "4 Detects"} trend="high" />
-                    </div>
+            <div className="space-y-8 relative z-10">
+              {isLoading ? (
+                <div className="py-24 flex flex-col items-center justify-center gap-5">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl animate-pulse" />
+                    <Loader2 className="w-16 h-16 text-emerald-500 animate-spin relative" />
                   </div>
-                  
-                  <div className="p-6 bg-red-600 rounded-[2rem] text-white shadow-xl shadow-red-100">
-                     <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Automated Triage</span>
-                     <h4 className="text-2xl font-black tracking-tight mt-1">{vendorRiskInfo.urgency} Action Required</h4>
-                     <p className="text-[10px] font-bold mt-2 opacity-90 leading-relaxed">
-                       Systems recommend an immediate physical audit and temporary supply suspension for District Cluster A-12.
-                     </p>
-                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Parsing supply node inefficiencies...</p>
                 </div>
-
-                <div className="md:col-span-7 flex flex-col justify-between">
-                  <div className="space-y-6">
-                     <div className="p-6 bg-amber-50 border border-amber-100 rounded-[2rem]">
-                        <div className="flex items-center gap-2 mb-3">
-                           <Sparkles className="w-4 h-4 text-amber-600" />
-                           <h4 className="text-xs font-black text-amber-900 uppercase tracking-widest">AI Synthesis Summary</h4>
-                        </div>
-                        <p className="text-sm font-bold text-amber-800 leading-relaxed italic">
-                          "{vendorRiskInfo.summary}"
-                        </p>
-                     </div>
-
-                     <div className="space-y-3">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                          <Layers className="w-3.5 h-3.5" /> Evidence Breakdown
-                        </h4>
-                        <div className="space-y-2">
-                           {vendorRiskInfo.details.map((detail: string, i: number) => (
-                             <div key={i} className="flex items-start gap-3 p-4 bg-white border border-slate-100 rounded-2xl hover:border-amber-200 transition-colors shadow-sm">
-                                <div className="w-5 h-5 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 shrink-0 font-black text-[10px]">
-                                   {i + 1}
-                                </div>
-                                <p className="text-[11px] font-bold text-slate-700 leading-normal">{detail}</p>
-                             </div>
-                           ))}
-                        </div>
-                     </div>
-                  </div>
-                  
-                  <div className="mt-8 flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                     <div className="flex items-center gap-3">
-                        <Cpu className="w-4 h-4 text-slate-400" />
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Model: Gemini 3.1 Flash-Reasoning</span>
-                     </div>
-                     <button 
-                       onClick={() => setShowConfidenceModal(true)}
-                       className="text-[9px] font-black text-indigo-600 uppercase tracking-widest border-b border-indigo-200 hover:text-indigo-800 transition-colors active:scale-95"
-                     >
-                       View Confidence Data
-                     </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between mb-8"><div className="flex items-center gap-3"><div className="bg-blue-50 p-2.5 rounded-2xl"><TrendingUp className="text-blue-600 w-5 h-5" /></div><h3 className="text-xl font-black text-gray-900 tracking-tight">National Incident Trends</h3></div></div>
-            <div className="h-[280px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mockTrendData}>
-                  <defs><linearGradient id="colorIncidents" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient></defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}} />
-                  <RechartsTooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '10px' }} />
-                  <Area type="monotone" dataKey="incidents" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorIncidents)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-6"><div className="bg-indigo-50 p-2.5 rounded-2xl shadow-sm"><Megaphone className="text-indigo-600 w-5 h-5" /></div><h3 className="text-xl font-black text-gray-900 tracking-tight">Social Pulse</h3></div>
-                <div className="space-y-4">
-                  {mockSocialPosts.map((post, i) => (
-                    <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-lg transition-all group">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-1.5 h-1.5 rounded-full ${post.sentiment === 'negative' ? 'bg-red-500' : 'bg-emerald-500'}`} />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{post.topic}</span>
-                      </div>
-                      <p className="text-xs text-gray-600 font-medium italic">"{post.text}"</p>
-                    </div>
-                  ))}
-                </div>
-             </div>
-             
-             {/* Enhanced Sentiment Trend Graphic */}
-             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm flex flex-col justify-between overflow-hidden relative">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><BarChartIcon className="w-3.5 h-3.5" /> Sentiment Volatility</h4>
-                  <span className="text-[8px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100 uppercase tracking-widest animate-pulse">Live Tracking</span>
-                </div>
-                
-                <div className="h-[120px] w-full mb-4">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockSentimentTrend}>
-                      <XAxis dataKey="time" hide />
-                      <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{ fontSize: '9px', borderRadius: '12px', border: 'none' }} />
-                      <Bar dataKey="neg" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pos" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mt-auto">
-                   <div className="text-center">
-                      <span className="text-2xl font-black text-emerald-600">42%</span>
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Positive Engagement</p>
-                   </div>
-                   <div className="text-center border-l border-slate-100">
-                      <span className="text-2xl font-black text-red-600">58%</span>
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Critical Reports</p>
-                   </div>
-                </div>
-
-                <div className="mt-6">
-                   <SentimentGauge score={predictiveData?.score / 10 || 4.2} />
-                </div>
-             </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 space-y-6">
-          
-          <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden border border-slate-800">
-            <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none"><Target className="w-48 h-48 text-emerald-400" /></div>
-            <div className="flex items-center gap-3 mb-8 relative z-10"><div className="bg-emerald-500/20 p-2.5 rounded-2xl border border-emerald-500/20 shadow-lg"><BarChart3 className="w-5 h-5 text-emerald-400" /></div><div><h3 className="text-lg font-black tracking-tight">Projected Impact</h3><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">BGN System ROI</p></div></div>
-            <div className="space-y-6 relative z-10">
-              <MetricItem label="Detection Latency" value="-60%" color="text-emerald-400" icon={<Clock className="w-4 h-4" />} />
-              <MetricItem label="Response Speed" value="+45%" color="text-indigo-400" icon={<Zap className="w-4 h-4" />} />
-              <MetricItem label="Vendor Trust" value="+35%" color="text-amber-400" icon={<ShieldCheck className="w-4 h-4" />} />
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm"><div className="flex items-center gap-2 mb-6"><Fingerprint className="w-4 h-4 text-indigo-600" /><h4 className="text-xs font-black uppercase tracking-widest text-gray-900">Integrity Proofs</h4></div><div className="space-y-3">{mockBlockchainLogs.slice(0, 3).map((log, i) => (<div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between"><div><span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest block">{log.a}</span><span className="text-[8px] font-mono text-slate-400">{log.h}</span></div><CheckCircle className="w-4 h-4 text-emerald-500" /></div>))}</div></div>
-          
-          {/* Regional Pulse Component */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
-            <div className="flex items-center justify-between mb-8">
-               <div className="flex items-center gap-3">
-                  <div className="bg-indigo-600 p-2.5 rounded-2xl shadow-xl"><Globe className="w-5 h-5 text-white" /></div>
-                  <div>
-                    <h3 className="text-lg font-black text-gray-900 tracking-tight leading-none">Regional Pulse</h3>
-                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Live Geographical Heatmap</p>
-                  </div>
-               </div>
-               <div className="flex items-center gap-2">
-                  <button 
-                    onClick={fetchRisks}
-                    disabled={isRisksLoading}
-                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all disabled:opacity-50"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isRisksLoading ? 'animate-spin' : ''}`} />
-                  </button>
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-emerald-400/20 rounded-full animate-ping" />
-                    <div className="relative w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-                  </div>
-               </div>
-            </div>
-
-            <div className="space-y-4 flex-1">
-              {isRisksLoading ? (
-                <div className="py-20 flex flex-col items-center justify-center text-center">
-                  <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest animate-pulse">Gathering Regional Intel...</p>
-                </div>
-              ) : regionalRisks.length > 0 ? (
-                regionalRisks.slice(0, 5).map((region, i) => {
-                  const isSimHit = isSimulationMode && region.region === 'Jakarta Raya';
-                  const riskLevel = isSimHit ? 'CRITICAL' : region.risk;
-                  const score = isSimHit ? 88 : region.score;
-                  
-                  return (
-                    <div key={i} className={`group p-5 rounded-[2rem] border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 ${isSimHit ? 'bg-red-50 border-red-200 animate-in pulse-red' : 'bg-slate-50 border-slate-100 hover:bg-white'}`}>
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-black text-sm text-gray-900 leading-none group-hover:text-indigo-600 transition-colors">{region.region}</h4>
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 block">{region.activeVendors} Active Vendors</span>
-                        </div>
-                        <div className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest border shadow-sm ${riskLevel === 'CRITICAL' || riskLevel === 'High' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-emerald-600 border-emerald-100'}`}>
-                           {riskLevel}
+              ) : actions.map((action, idx) => (
+                <div 
+                  key={action.id} 
+                  className={`p-10 rounded-[3rem] border transition-all duration-500 ${activeActionId === action.id ? 'bg-white text-slate-900 scale-[1.02] shadow-[0_30px_80px_rgba(0,0,0,0.4)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                >
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-10">
+                    <div className="flex-1 space-y-5">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black tracking-widest border ${action.priority === 'HIGH' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>
+                          {action.priority} PRIORITY
+                        </span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest border border-white/10 px-3 py-1.5 rounded-xl">ID: {action.id}</span>
+                        
+                        {/* Decision Confidence Pill */}
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20 shadow-inner">
+                          <Fingerprint className="w-3 h-3 text-indigo-400" />
+                          <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">AI Confidence: {action.confidence}</span>
                         </div>
                       </div>
                       
-                      <div className="flex items-end justify-between">
-                         <div className="flex-1 mr-4">
-                            <p className="text-[10px] text-slate-500 font-bold leading-relaxed mb-2">
-                               <span className="text-indigo-600 font-black">Issue:</span> {isSimHit ? 'Cluster Reported (3 Schools)' : region.concern}
-                            </p>
-                            <div className="flex items-center gap-1.5">
-                               <div className={`px-2 py-0.5 rounded-md text-[8px] font-black tracking-tighter uppercase ${region.status === 'Stable' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                                 {isSimHit ? 'Crisis Command' : region.status}
-                               </div>
-                            </div>
-                         </div>
-                         <div className="text-center">
-                            <span className={`text-2xl font-black tracking-tighter leading-none ${isSimHit ? 'text-red-600' : 'text-gray-900'}`}>{score}</span>
-                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Score</p>
-                         </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <h4 className="text-3xl font-black tracking-tight mb-2">{action.vendor}</h4>
+                          <p className="text-base font-bold text-slate-400 leading-relaxed italic">
+                            "{action.action}"
+                          </p>
+                        </div>
+                        
+                        {/* Why This Action? Tooltip Enhancement */}
+                        <div className="group relative">
+                          <div className={`p-4 rounded-2xl cursor-help transition-all duration-300 shadow-lg ${activeActionId === action.id ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-800 text-indigo-400 hover:bg-slate-700'}`}>
+                            <HelpCircle className="w-6 h-6" />
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-slate-900 text-white text-[8px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Why Suggested?</span>
+                          </div>
+                          
+                          {/* Tooltip Content */}
+                          <div className="absolute bottom-full right-0 mb-4 w-80 p-6 bg-slate-900 text-white rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.6)] border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none translate-y-3 group-hover:translate-y-0 z-50">
+                             <div className="flex items-center gap-2 mb-4">
+                               <Microscope className="w-4 h-4 text-indigo-400" />
+                               <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Why Suggested? (Explainability)</span>
+                             </div>
+                             <ul className="space-y-3">
+                               {action.whySuggested?.map((reason: string, i: number) => (
+                                 <li key={i} className="text-[11px] font-bold leading-relaxed flex items-start gap-3 text-slate-300">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                                   {reason}
+                                 </li>
+                               ))}
+                             </ul>
+                             <div className="mt-4 pt-4 border-t border-white/5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Decision Trust Score</span>
+                                  <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">High (0.94)</span>
+                                </div>
+                             </div>
+                             <div className="absolute top-full right-7 -translate-y-px border-[12px] border-transparent border-t-slate-900" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-6 text-[10px] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-slate-500"><Target className="w-4 h-4 text-indigo-400" /> Target: {action.target}</div>
+                        <div className="flex items-center gap-2 text-emerald-400"><TrendingDown className="w-4 h-4" /> Est. Reduction: {action.expectedReduction}</div>
                       </div>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="py-20 flex flex-col items-center justify-center text-center text-slate-400 space-y-4">
-                  <div className="p-4 bg-slate-50 rounded-full"><AlertCircle className="w-8 h-8" /></div>
-                  <p className="text-[10px] font-black uppercase tracking-widest">No Regional Data Available</p>
-                  <button onClick={fetchRisks} className="text-indigo-600 font-black text-[10px] uppercase tracking-widest border-b border-indigo-200">Retry Fetch</button>
-                </div>
-              )}
-            </div>
 
-            {/* Integrated Grounding Ledger */}
-            {riskSources.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-slate-100 bg-slate-50/50 -mx-8 -mb-8 p-8 animate-in fade-in duration-700">
-                <div className="flex items-center gap-2 mb-4">
-                  <DatabaseIcon className="w-3.5 h-3.5 text-indigo-600" />
-                  <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Grounding Intelligence Ledger</h4>
-                </div>
-                <div className="space-y-2">
-                  {riskSources.slice(0, 3).map((source, i) => (
-                    source.web && (
-                      <a 
-                        key={i} 
-                        href={source.web.uri} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md hover:border-indigo-100 transition-all group"
-                      >
-                        <div className="flex items-center gap-2 overflow-hidden">
-                           <Newspaper className="w-3 h-3 text-slate-300 shrink-0" />
-                           <span className="text-[9px] font-bold text-slate-600 truncate group-hover:text-indigo-600">{source.web.title || source.web.uri}</span>
+                    <div className="flex flex-col gap-3 min-w-[220px]">
+                      {activeActionId === action.id && processingState !== 'IDLE' ? (
+                        <div className="flex flex-col items-center gap-4 p-6 bg-slate-50 rounded-[2rem] border border-slate-200">
+                          {processingState === 'APPLYING' && (
+                            <div className="flex flex-col items-center gap-3">
+                              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                              <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Applying Policy...</span>
+                            </div>
+                          )}
+                          {processingState === 'SIMULATING' && (
+                            <div className="flex flex-col items-center gap-3">
+                              <Zap className="w-8 h-8 text-amber-500 animate-pulse" />
+                              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Simulating...</span>
+                            </div>
+                          )}
+                          {processingState === 'SUCCESS' && (
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-6 h-6" />
+                              </div>
+                              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Policy Locked</span>
+                            </div>
+                          )}
                         </div>
-                        <ExternalLink className="w-3 h-3 text-slate-200 group-hover:text-indigo-400 shrink-0" />
-                      </a>
-                    )
-                  ))}
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => handleApplyAction(action.id)}
+                            className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 ${
+                              action.status === 'Verified Effective' ? 'bg-slate-100 text-slate-400 cursor-default' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            }`}
+                          >
+                            {action.status === 'Verified Effective' ? <ShieldCheck className="w-4 h-4" /> : <PlayIcon className="w-4 h-4" />}
+                            {action.status === 'Verified Effective' ? 'Locked & Verified' : 'Execute Policy'}
+                          </button>
+                          <button 
+                            onClick={() => handleSimulate(action)}
+                            disabled={action.status === 'Verified Effective'}
+                            className="w-full py-5 bg-white/5 text-slate-400 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            <Zap className="w-4 h-4" /> Simulate Impact
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     {/* Logic Breakdown Card */}
+                     <div className={`p-8 rounded-[2.5rem] border transition-all duration-500 ${activeActionId === action.id ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/5'}`}>
+                        <div className="flex items-center justify-between mb-6">
+                           <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-xl ${activeActionId === action.id ? 'bg-indigo-600 text-white' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                                <Microscope className="w-4 h-4" />
+                              </div>
+                              <h5 className="text-[11px] font-black uppercase tracking-widest">Evidence Reasoning</h5>
+                           </div>
+                           <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-lg border transition-colors ${activeActionId === action.id ? 'bg-indigo-100 text-indigo-600 border-indigo-200' : 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'}`}>
+                             Proof Score: {action.evidenceScore}
+                           </span>
+                        </div>
+                        <ul className="space-y-3">
+                           {action.whySuggested?.map((reason: string, i: number) => (
+                             <li key={i} className={`text-xs font-bold leading-relaxed flex items-start gap-3 transition-colors ${activeActionId === action.id ? 'text-slate-600' : 'text-slate-400'}`}>
+                               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0" />
+                               {reason}
+                             </li>
+                           ))}
+                        </ul>
+                     </div>
+
+                     {/* Post-Execution Feedback Slot */}
+                     <div className={`p-8 rounded-[2.5rem] border transition-all duration-700 overflow-hidden relative ${action.status === 'Verified Effective' ? 'bg-emerald-500/10 border-emerald-500/20 shadow-inner' : 'bg-white/5 border-white/5 opacity-40'}`}>
+                        {action.status === 'Verified Effective' && <div className="absolute top-0 right-0 p-10 opacity-5 -rotate-12"><ShieldCheck className="w-48 h-48" /></div>}
+                        <div className="flex items-center gap-3 mb-6 relative z-10">
+                           <div className={`p-2 rounded-xl ${action.status === 'Verified Effective' ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-500'}`}>
+                             <Activity className="w-4 h-4" />
+                           </div>
+                           <h5 className={`text-[11px] font-black uppercase tracking-widest ${action.status === 'Verified Effective' ? 'text-emerald-400' : 'text-slate-500'}`}>Post-Execution Feedback</h5>
+                        </div>
+                        {action.status === 'Verified Effective' ? (
+                           <div className="space-y-4 relative z-10">
+                              <VerificationMetric label="Result Status" value="Locked" color="text-emerald-400" />
+                              <VerificationMetric label="Measured Waste Δ" value={action.verifiedDelta?.waste || 'N/A'} />
+                              <VerificationMetric label="Confidence Evolution" value={`${action.confidence} → ${action.verifiedDelta?.confidence || 'N/A'}`} />
+                              <div className="pt-4 mt-4 border-t border-emerald-500/10">
+                                <p className="text-[10px] font-bold text-emerald-600 leading-tight">AI verified 9.1% improvement in resource allocation after portion shift.</p>
+                              </div>
+                           </div>
+                        ) : (
+                           <div className="flex flex-col items-center justify-center h-32 text-center opacity-50">
+                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Result: Pending</p>
+                              <span className="text-[8px] text-slate-600 font-bold mt-2 leading-relaxed">System will auto-validate metrics 24h after implementation.</span>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+
+                  {/* Flow Steps */}
+                  <div className="mt-8 pt-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FlowStep 
+                      icon={<SchoolIcon className="w-5 h-5" />} 
+                      label="School District" 
+                      status={action.status === 'Verified Effective' ? 'Completed' : 'Validated'} 
+                      desc="Inventory match verified"
+                      dark={activeActionId !== action.id}
+                    />
+                    <FlowStep 
+                      icon={<TruckIcon className="w-5 h-5" />} 
+                      label="Supply Node" 
+                      status={action.status === 'Verified Effective' ? 'Completed' : 'Awaiting Lock'} 
+                      desc="Prep batch re-allocated"
+                      dark={activeActionId !== action.id}
+                    />
+                    <FlowStep 
+                      icon={<ShieldCheck className="w-5 h-5" />} 
+                      label="Governance Hub" 
+                      status={action.status === 'Verified Effective' ? 'Completed' : 'Queued'} 
+                      desc="Policy hash published"
+                      dark={activeActionId !== action.id}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          </div>
+
+          {/* Waste Chart Panel */}
+          <div className="bg-white p-10 rounded-[3.5rem] border border-gray-200 shadow-sm transition-all hover:shadow-xl">
+            <div className="flex items-center justify-between mb-12">
+               <div className="flex items-center gap-4">
+                 <div className="p-4 bg-emerald-50 rounded-[1.5rem] shadow-inner"><BarChart3 className="text-emerald-600 w-6 h-6" /></div>
+                 <div>
+                   <h3 className="text-2xl font-black text-gray-900 tracking-tight leading-none">Vendor Inefficiency Benchmark</h3>
+                   <p className="text-xs text-slate-400 font-black uppercase tracking-widest mt-2">Waste Variance per Supply Node</p>
+                 </div>
+               </div>
+               <div className="flex items-center gap-3">
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 px-4 py-2 rounded-full shadow-sm">Global Limit: 10%</span>
+               </div>
+            </div>
+            
+            <div className="h-[320px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mockVendorWaste}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  {/* Changed fontBold to fontWeight to fix SVG type errors */}
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: '900', fill: '#94a3b8'}} />
+                  {/* Changed fontBold to fontWeight to fix SVG type errors */}
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: '900', fill: '#94a3b8'}} unit="%" />
+                  <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px' }} />
+                  <Bar dataKey="waste" radius={[12, 12, 0, 0]}>
+                    {mockVendorWaste.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.waste > 15 ? '#ef4444' : '#10b981'} className="transition-all hover:opacity-80" />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
+
+        {/* Right Info Column */}
+        <div className="lg:col-span-4 space-y-8">
+           
+           {/* Policy Trigger Panel */}
+           <div className="bg-indigo-600 p-10 rounded-[3.5rem] border border-indigo-400 text-white shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:rotate-12 transition-transform duration-1000 group-hover:scale-110"><Sparkles className="w-56 h-56" /></div>
+              <div className="flex items-center gap-4 mb-8 relative z-10">
+                 <div className="p-3 bg-white/20 rounded-2xl shadow-inner border border-white/10"><Cpu className="w-7 h-7" /></div>
+                 <h3 className="text-xl font-black tracking-tight leading-none">Explainable Policy Trigger</h3>
+              </div>
+              <div className="space-y-8 relative z-10">
+                 <p className="text-base font-bold text-indigo-50 leading-relaxed italic">
+                    "AI Policy Cluster 04: Automatically adjusting lunch logistics based on <span className="text-white font-black px-1.5 py-0.5 bg-indigo-500 rounded-md">Cluster A-12</span> spatial variance. Expected waste reduction: 14% across 8 schools."
+                 </p>
+                 <div className="pt-8 border-t border-white/20">
+                    <div className="flex items-center justify-between mb-4">
+                       <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Inference Grounding</span>
+                       <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-xl text-[10px] font-black border border-emerald-500/30">0.98 Verified</span>
+                    </div>
+                    <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                      <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0"><Package className="w-6 h-6 text-indigo-100" /></div>
+                      <p className="text-[11px] font-bold text-indigo-100 leading-snug">Synced with national BPOM v2.1 sanitation and portion compliance ledger.</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           {/* Governance History */}
+           <div className="bg-white p-10 rounded-[3.5rem] border border-gray-200 shadow-sm transition-all hover:shadow-lg">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-3"><History className="w-5 h-5 text-indigo-600" /> Compliance Trail</h3>
+                <span className="text-[9px] font-black text-slate-300">BLOCK: 209,102</span>
+              </div>
+              <div className="space-y-4">
+                {actions.map((action, i) => (
+                  <div key={i} className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 group hover:border-indigo-200 transition-all cursor-default">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-lg border ${
+                        action.status === 'Verified Effective' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                        action.status === 'In Progress' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}>
+                        {action.status}
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-400">0x{action.id.split('-').pop()}</span>
+                    </div>
+                    <p className="text-xs font-black text-slate-700 leading-snug mb-3 group-hover:text-indigo-600 transition-colors">{action.action}</p>
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-200/50">
+                      <Fingerprint className="w-3.5 h-3.5 text-slate-300" />
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">TX: {Math.random().toString(36).substring(7).toUpperCase()}...</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button className="w-full mt-10 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-100">
+                Generate Audit Proof
+              </button>
+           </div>
+
+           {/* Sustainability ROI */}
+           <div className="bg-slate-900 p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden border border-emerald-500/20">
+               <div className="absolute top-0 right-0 p-12 opacity-10 rotate-12 pointer-events-none"><Globe className="w-56 h-56 text-emerald-400" /></div>
+               <div className="flex items-center gap-4 mb-10 relative z-10">
+                  <div className="p-3 bg-emerald-600 rounded-2xl shadow-lg"><Scale className="w-6 h-6 text-white" /></div>
+                  <div>
+                    <h3 className="text-xl font-black tracking-tight leading-none">Sustainability ROI</h3>
+                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1.5">Ecological Impact Matrix</p>
+                  </div>
+               </div>
+               <div className="space-y-8 relative z-10">
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-colors">
+                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">CO₂ Avoided Overall</p>
+                     <p className="text-4xl font-black text-emerald-400 tracking-tighter">{impact?.co2AvoidedKg || '2,430'} Kg</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-colors text-center">
+                        <span className="text-[9px] font-black text-slate-500 uppercase block mb-2">Meals Saved</span>
+                        <span className="text-2xl font-black text-white">{impact?.mealsSaved || '14,205'}</span>
+                     </div>
+                     <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-colors text-center">
+                        <span className="text-[9px] font-black text-slate-500 uppercase block mb-2">Waste Rate Δ</span>
+                        <span className="text-2xl font-black text-emerald-400">-{impact?.wasteReductionPct || '18.4'}%</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+        </div>
       </div>
-      <style>{`
-        @keyframes pulse-red {
-          0% { background-color: rgb(254, 242, 242); }
-          50% { background-color: rgb(254, 226, 226); }
-          100% { background-color: rgb(254, 242, 242); }
-        }
-        .pulse-red {
-          animation: pulse-red 2s infinite;
-        }
-      `}</style>
     </div>
   );
 };
 
-const StatCard = ({ title, value, sub, icon, color = 'bg-white' }: any) => (
-  <div className={`${color} p-6 rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group cursor-default text-left`}>
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-gray-600 transition-colors">{title}</p>
-        <h4 className="text-3xl font-black text-gray-900 tracking-tighter">{value}</h4>
-        <p className="text-[10px] text-gray-500 mt-1.5 font-bold flex items-center gap-1"><TrendingUp className="w-3 h-3 text-green-500" /> {sub}</p>
+const VerificationMetric = ({ label, value, color = "text-emerald-400" }: any) => (
+   <div className="flex items-center justify-between">
+      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+      <span className={`text-[11px] font-black ${color}`}>{value}</span>
+   </div>
+);
+
+const DeltaCard = ({ label, value, color, sub, icon }: any) => (
+   <div className="p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100 hover:shadow-lg transition-all hover:bg-white">
+      <div className="flex items-center gap-2 mb-3">
+        <div className={`p-1.5 rounded-lg bg-white shadow-sm ${color.replace('text', 'text')}`}>{icon}</div>
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{label}</span>
       </div>
-      <div className="p-3.5 bg-white rounded-2xl shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">{icon}</div>
+      <span className={`text-3xl font-black tracking-tighter ${color}`}>{value}</span>
+      <span className="text-[9px] font-bold text-slate-400 block mt-1 uppercase tracking-tight">{sub}</span>
+   </div>
+);
+
+const KPIItem = ({ label, value, sub, icon, color = 'bg-white', onInfoClick }: any) => (
+  <div className={`${color} p-8 rounded-[2.5rem] border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group cursor-default text-left relative overflow-hidden`}>
+    <div className="absolute -bottom-4 -right-4 p-4 opacity-5 group-hover:scale-125 transition-transform">{icon}</div>
+    <div className="flex items-start justify-between relative z-10">
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-gray-600 transition-colors">{label}</p>
+          {onInfoClick && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onInfoClick(); }}
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Info className="w-3 h-3 text-gray-300 group-hover:text-indigo-400" />
+            </button>
+          )}
+        </div>
+        <h4 className="text-4xl font-black text-gray-900 tracking-tighter">{value}</h4>
+        <div className="flex items-center gap-1.5 mt-3">
+          {sub.includes('-') || sub.includes('High') ? <TrendingDown className="w-3.5 h-3.5 text-red-500" /> : <TrendingUp className="w-3.5 h-3.5 text-green-500" />}
+          <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{sub}</span>
+        </div>
+      </div>
+      <div className="p-4 bg-white rounded-3xl shadow-xl shadow-gray-100 border border-gray-50 group-hover:rotate-12 transition-transform">{icon}</div>
     </div>
   </div>
 );
 
-const RuleMetric = ({ label, value, weight }: any) => (
-  <div className="flex items-center justify-between text-xs">
-    <div className="flex flex-col">
-       <span className="font-bold text-gray-900">{label}</span>
-       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Value: {value}</span>
+const FlowStep = ({ icon, label, status, desc, dark = true }: any) => (
+  <div className={`flex flex-col items-center text-center p-5 rounded-[2rem] border transition-all ${dark ? 'bg-white/5 border-white/5 opacity-30 scale-95' : 'bg-slate-50 border-slate-200 scale-100 shadow-sm'}`}>
+    <div className={`p-3 rounded-2xl mb-4 transition-all ${status === 'Completed' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : dark ? 'bg-white/10 text-slate-500' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'}`}>
+      {status === 'Completed' ? <CheckCircle2 className="w-5 h-5" /> : icon}
     </div>
-    <span className="font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">W: {weight}</span>
+    <span className={`text-[10px] font-black uppercase tracking-widest mb-1 ${dark ? 'text-slate-500' : 'text-slate-900'}`}>{label}</span>
+    <span className={`text-[8px] font-bold leading-tight ${dark ? 'text-slate-600' : 'text-slate-400'}`}>{desc}</span>
+    <div className={`mt-3 px-3 py-1 rounded-full text-[7px] font-black uppercase tracking-widest border ${
+      status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-200 text-slate-500 border-slate-300'
+    }`}>{status}</div>
   </div>
 );
 
-const RiskFactor = ({ icon, label, value, trend }: any) => (
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-3">
-       <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm">
-          {icon}
-       </div>
-       <span className="text-xs font-bold text-slate-600">{label}</span>
-    </div>
-    <div className="text-right">
-       <span className="text-xs font-black text-slate-900">{value}</span>
-       <div className={`text-[8px] font-black uppercase tracking-widest ${trend === 'high' ? 'text-red-500' : 'text-emerald-500'}`}>
-          {trend === 'high' ? 'Alert' : 'Nominal'}
-       </div>
-    </div>
-  </div>
+const SchoolIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
 );
 
-const MetricItem = ({ label, value, color, icon }: any) => (
-  <div className="flex items-center justify-between group">
-    <div className="flex items-center gap-3">
-      <div className={`p-1.5 rounded-lg bg-slate-800 text-slate-400 group-hover:${color.replace('text', 'bg')} group-hover:text-white transition-all`}>{icon}</div>
-      <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{label}</span>
-    </div>
-    <div className={`text-xl font-black ${color}`}>{value}</div>
-  </div>
+const TruckIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="13" x="2" y="6" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
 );
 
-export default RegulatorDashboard;
+const PlayIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+);
+
+export default SustainabilityPortal;
