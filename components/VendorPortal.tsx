@@ -10,7 +10,7 @@ import {
   Stethoscope, Users2, MessageSquareText, Sparkles, Sun, Utensils,
   Search, Filter, SlidersHorizontal, Calendar, XCircle, FileText, ExternalLink,
   Download, RefreshCw, Smartphone, Eye, Award, FileSearch, Shield, Verified,
-  Printer, Share
+  Printer, Share, Trash2, Droplets, Target, TrendingDown, PieChart
 } from 'lucide-react';
 import { analyzeKitchenPhoto } from '../geminiService';
 import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, CartesianGrid, XAxis, AreaChart, Area } from 'recharts';
@@ -38,8 +38,20 @@ const VendorPortal: React.FC = () => {
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [currentTemp, setCurrentTemp] = useState(4.2);
-  const [activeTab, setActiveTab] = useState<'ops' | 'compliance' | 'traceability' | 'wellness' | 'prep_log'>('ops');
+  const [activeTab, setActiveTab] = useState<'ops' | 'compliance' | 'traceability' | 'wellness' | 'prep_log' | 'waste' | 'sustainability'>('ops');
   const [riskScore, setRiskScore] = useState(1.8);
+  
+  // Waste Logging State
+  const [wasteLogs, setWasteLogs] = useState([
+    { id: 1, item: 'Rice', quantity: 5, unit: 'kg', reason: 'Over-portioning', date: '2026-03-04' },
+    { id: 2, item: 'Spinach', quantity: 2, unit: 'kg', reason: 'Spoilage', date: '2026-03-03' },
+  ]);
+
+  // Sustainability Goals State
+  const [sustainabilityGoals, setSustainabilityGoals] = useState([
+    { id: 1, title: 'Reduce Vegetable Waste', target: 10, current: 4, unit: '%', deadline: 'Next Month' },
+    { id: 2, title: 'Lower Energy Usage', target: 5, current: 2, unit: '%', deadline: 'End of Quarter' },
+  ]);
   
   // Advanced Traceability Filtering States
   const [searchTerm, setSearchTerm] = useState('');
@@ -213,6 +225,51 @@ const VendorPortal: React.FC = () => {
   const openBatchDetail = (item: any) => {
     setSelectedBatch(item);
     setShowBatchDetailModal(true);
+  };
+
+  const handleAddWaste = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const item = formData.get('item') as string;
+    const quantity = parseFloat(formData.get('quantity') as string);
+    const unit = formData.get('unit') as string;
+    const reason = formData.get('reason') as string;
+
+    setIsActionLoading('ADDING_WASTE');
+    setTimeout(() => {
+      setWasteLogs(prev => [{
+        id: Date.now(),
+        item,
+        quantity,
+        unit,
+        reason,
+        date: new Date().toISOString().split('T')[0]
+      }, ...prev]);
+      setIsActionLoading(null);
+      (e.target as HTMLFormElement).reset();
+    }, 1000);
+  };
+
+  const handleAddGoal = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const title = formData.get('title') as string;
+    const target = parseFloat(formData.get('target') as string);
+    const unit = formData.get('unit') as string;
+
+    setIsActionLoading('ADDING_GOAL');
+    setTimeout(() => {
+      setSustainabilityGoals(prev => [{
+        id: Date.now(),
+        title,
+        target,
+        current: 0,
+        unit,
+        deadline: 'Next Month'
+      }, ...prev]);
+      setIsActionLoading(null);
+      (e.target as HTMLFormElement).reset();
+    }, 1000);
   };
 
   const getRiskColor = (score: number) => {
@@ -531,7 +588,7 @@ const VendorPortal: React.FC = () => {
 
       {/* Main Tabs */}
       <div className="flex items-center gap-2 p-1.5 bg-gray-100 rounded-2xl w-fit overflow-x-auto max-w-full no-scrollbar">
-        {['ops', 'prep_log', 'compliance', 'traceability', 'wellness'].map(tab => (
+        {['ops', 'prep_log', 'compliance', 'traceability', 'wellness', 'waste', 'sustainability'].map(tab => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab as any)}
@@ -915,6 +972,158 @@ const VendorPortal: React.FC = () => {
                   <button onClick={clearFilters} className="mt-6 text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-600/30 hover:border-emerald-600 transition-all">Clear active filters</button>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'waste' && (
+            <div className="space-y-6">
+              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="bg-red-50 p-3 rounded-2xl shadow-lg">
+                    <Trash2 className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 leading-tight">Daily Waste Log</h3>
+                    <p className="text-xs text-gray-500 font-medium italic">Track and categorize daily food waste.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleAddWaste} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                  <div className="md:col-span-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Item Type</label>
+                    <input required name="item" className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-red-100" placeholder="e.g. Rice" />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Quantity</label>
+                    <div className="flex gap-2">
+                      <input required name="quantity" type="number" step="0.1" className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-red-100" placeholder="5.0" />
+                      <select name="unit" className="p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase outline-none">
+                        <option>kg</option>
+                        <option>units</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Reason</label>
+                    <select name="reason" className="w-full p-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase outline-none">
+                      <option>Over-portioning</option>
+                      <option>Spoilage</option>
+                      <option>Expired</option>
+                      <option>Preparation Error</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-1 flex items-end">
+                    <button disabled={!!isActionLoading} type="submit" className="w-full py-3 bg-red-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95 shadow-lg shadow-red-100 flex items-center justify-center gap-2">
+                      {isActionLoading === 'ADDING_WASTE' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      Log Waste
+                    </button>
+                  </div>
+                </form>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
+                        <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Item</th>
+                        <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Quantity</th>
+                        <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {wasteLogs.map((log) => (
+                        <tr key={log.id} className="group hover:bg-slate-50 transition-colors">
+                          <td className="py-4 text-xs font-bold text-gray-500">{log.date}</td>
+                          <td className="py-4 text-xs font-black text-gray-900">{log.item}</td>
+                          <td className="py-4 text-xs font-black text-red-600">{log.quantity} {log.unit}</td>
+                          <td className="py-4">
+                            <span className="px-2 py-1 bg-slate-100 text-slate-600 text-[9px] font-black rounded-lg uppercase tracking-tight">{log.reason}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'sustainability' && (
+            <div className="space-y-6">
+              {/* Sustainability Indicators */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="p-3 bg-emerald-50 rounded-2xl mb-3"><Leaf className="w-6 h-6 text-emerald-600" /></div>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Waste Efficiency</span>
+                  <span className="text-2xl font-black text-gray-900 mt-1">88%</span>
+                </div>
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="p-3 bg-blue-50 rounded-2xl mb-3"><Droplets className="w-6 h-6 text-blue-600" /></div>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Water Usage</span>
+                  <span className="text-2xl font-black text-gray-900 mt-1">420L/day</span>
+                </div>
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                  <div className="p-3 bg-amber-50 rounded-2xl mb-3"><Zap className="w-6 h-6 text-amber-600" /></div>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Energy Usage</span>
+                  <span className="text-2xl font-black text-gray-900 mt-1">12.5 kWh</span>
+                </div>
+              </div>
+
+              {/* Goal Setting & Progress */}
+              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-indigo-600 p-3 rounded-2xl shadow-lg">
+                      <Target className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-gray-900 leading-tight">Sustainability Goals</h3>
+                      <p className="text-xs text-gray-500 font-medium italic">Set and track measurable reduction targets.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={handleAddGoal} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                  <div className="md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Goal Title</label>
+                    <input required name="title" className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100" placeholder="e.g. Reduce Veggie Waste" />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Target (%)</label>
+                    <input required name="target" type="number" className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-100" placeholder="10" />
+                    <input type="hidden" name="unit" value="%" />
+                  </div>
+                  <div className="md:col-span-1 flex items-end">
+                    <button disabled={!!isActionLoading} type="submit" className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+                      {isActionLoading === 'ADDING_GOAL' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      Set Goal
+                    </button>
+                  </div>
+                </form>
+
+                <div className="space-y-6">
+                  {sustainabilityGoals.map((goal) => (
+                    <div key={goal.id} className="space-y-3">
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <h4 className="text-sm font-black text-gray-900">{goal.title}</h4>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Deadline: {goal.deadline}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-black text-indigo-600">{goal.current} / {goal.target}{goal.unit}</span>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Progress</p>
+                        </div>
+                      </div>
+                      <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                        <div 
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${(goal.current / goal.target) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 

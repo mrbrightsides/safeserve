@@ -10,7 +10,7 @@ import {
   Package, History, BarChart3, Clock, Target, Loader2, CheckCircle2, 
   ArrowRight, ShieldCheck, Database, Fingerprint, Lock, Layers, RefreshCw,
   Cpu, Gavel, Microscope, Network, Shield, HelpCircle, Coins, Heart,
-  ArrowDownRight, PieChart
+  ArrowDownRight, PieChart, BookOpen
 } from 'lucide-react';
 import { getSustainabilityImpact, getSustainabilityActions, getAIPortionInsights } from '../geminiService';
 
@@ -31,6 +31,8 @@ const SustainabilityPortal: React.FC = () => {
   const [processingState, setProcessingState] = useState<'IDLE' | 'APPLYING' | 'SIMULATING' | 'SUCCESS'>('IDLE');
   const [showSimPanel, setShowSimPanel] = useState(false);
   const [simData, setSimData] = useState<any>(null);
+  const [showMethodology, setShowMethodology] = useState(false);
+  const [methodologyTopic, setMethodologyTopic] = useState<string | null>(null);
 
   const fetchImpactAndActions = async () => {
     setIsLoading(true);
@@ -76,9 +78,93 @@ const SustainabilityPortal: React.FC = () => {
     }, 1500);
   };
 
+  const openMethodology = (topic: string) => {
+    setMethodologyTopic(topic);
+    setShowMethodology(true);
+  };
+
+  const methodologyData: Record<string, any> = {
+    'Waste Rate': {
+      title: 'Food Waste Reduction Methodology',
+      how: 'We use AI Visual Audits of "Plate Waste." Schools upload photos of disposal bins or leftover trays after lunch. Our AI (Gemini) analyzes these images to estimate the volume of wasted food versus the total portions served.',
+      logic: 'By aggregating this "visual data" across thousands of schools, the system identifies specific menus that are consistently rejected. We then push Portion Calibration instructions to vendors to adjust their next batch, which directly reduces the waste percentage.'
+    },
+    'Meals Recovered': {
+      title: 'Meals Recovered Calculation',
+      how: 'This is tracked through our Surplus Management Ledger. When a school reports lower attendance (e.g., due to a field trip or rain), the vendor logs the "Surplus Safe Meals" in the portal.',
+      logic: 'The system then triggers a Recovery Alert to nearby community centers or food banks. Once the redistribution is confirmed by the receiving party, the "recovered" volume is added to our national sustainability total.'
+    },
+    'Budget Saved': {
+      title: 'Fiscal Efficiency Formula',
+      how: 'This is calculated based on two factors: 1. Direct Savings: (Baseline Waste % - Current Waste %) × Total Program Budget. 2. Indirect Savings: Avoided Healthcare Cost by preventing food poisoning incidents.',
+      logic: 'By reducing waste from 25% to 10%, we are effectively saving 15% of the procurement budget. We also estimate the medical cost avoided per prevented incident based on national health data.'
+    },
+    'Lives Protected': {
+      title: 'Lives Protected Metric',
+      how: 'This represents the Reach of Verified Safety. It is the total number of students served by vendors who have a "Verified Safe" status.',
+      logic: 'A "Verified Safe" status means the vendor has passed all AI hygiene audits, cold-chain sensor checks, and has zero active safety alerts. This ensures that every meal served to these students meets the highest safety standards.'
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 text-left animate-in fade-in duration-700 pb-20">
       
+      {/* Methodology Modal */}
+      {showMethodology && methodologyTopic && methodologyData[methodologyTopic] && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xl animate-in fade-in">
+          <div className="bg-white p-10 rounded-[3.5rem] shadow-[0_50px_120px_rgba(0,0,0,0.4)] w-full max-w-2xl border border-slate-100 relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none -rotate-12"><BookOpen className="w-64 h-64 text-indigo-600" /></div>
+             
+             <div className="flex justify-between items-center mb-10 relative z-10">
+                <div className="flex items-center gap-5">
+                  <div className="p-4 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-100">
+                    <Info className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-black text-gray-900 leading-none">{methodologyData[methodologyTopic].title}</h3>
+                    <p className="text-xs text-indigo-600 font-black uppercase tracking-widest mt-2">Data Source & Calculation Logic</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowMethodology(false)} 
+                  className="p-3 hover:bg-slate-100 rounded-2xl transition-all"
+                >
+                  <RefreshCw className="w-6 h-6 text-slate-300" />
+                </button>
+             </div>
+
+             <div className="space-y-8 relative z-10">
+                <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
+                   <div className="flex items-center gap-2 mb-4">
+                     <Target className="w-4 h-4 text-indigo-600" />
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">The "How" (Methodology)</span>
+                   </div>
+                   <p className="text-base font-bold text-slate-700 leading-relaxed">
+                     {methodologyData[methodologyTopic].how}
+                   </p>
+                </div>
+
+                <div className="p-8 bg-emerald-50 rounded-[2.5rem] border border-emerald-100">
+                   <div className="flex items-center gap-2 mb-4">
+                     <BrainCircuit className="w-4 h-4 text-emerald-600" />
+                     <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">The Logic (AI Synthesis)</span>
+                   </div>
+                   <p className="text-base font-bold text-emerald-800 leading-relaxed italic">
+                     {methodologyData[methodologyTopic].logic}
+                   </p>
+                </div>
+             </div>
+
+             <button 
+               onClick={() => setShowMethodology(false)} 
+               className="w-full mt-10 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
+             >
+               Understood, Close
+             </button>
+          </div>
+        </div>
+      )}
+
       {/* Simulation Delta Panel (Decision Support Overlay) */}
       {showSimPanel && simData && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
@@ -172,10 +258,36 @@ const SustainabilityPortal: React.FC = () => {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <KPIItem label="Waste Rate" value="11.4%" sub="-2.1% from LW" icon={<Scale className="text-emerald-600" />} />
-        <KPIItem label="Meals Recovered" value="1.2M" sub="Total Volume (YTD)" icon={<Utensils className="text-blue-600" />} color="bg-blue-50" />
-        <KPIItem label="Budget Saved" value="Rp 4.2B" sub="Fiscal Efficiency" icon={<Coins className="text-amber-600" />} color="bg-amber-50" />
-        <KPIItem label="Lives Protected" value="850k" sub="Student Reach" icon={<Heart className="text-red-500" />} />
+        <KPIItem 
+          label="Waste Rate" 
+          value="11.4%" 
+          sub="-2.1% from LW" 
+          icon={<Scale className="text-emerald-600" />} 
+          onInfoClick={() => openMethodology('Waste Rate')}
+        />
+        <KPIItem 
+          label="Meals Recovered" 
+          value="1.2M" 
+          sub="Total Volume (YTD)" 
+          icon={<Utensils className="text-blue-600" />} 
+          color="bg-blue-50" 
+          onInfoClick={() => openMethodology('Meals Recovered')}
+        />
+        <KPIItem 
+          label="Budget Saved" 
+          value="Rp 4.2B" 
+          sub="Fiscal Efficiency" 
+          icon={<Coins className="text-amber-600" />} 
+          color="bg-amber-50" 
+          onInfoClick={() => openMethodology('Budget Saved')}
+        />
+        <KPIItem 
+          label="Lives Protected" 
+          value="850k" 
+          sub="Student Reach" 
+          icon={<Heart className="text-red-500" />} 
+          onInfoClick={() => openMethodology('Lives Protected')}
+        />
       </div>
 
       {/* Beyond Safety: Double Bottom Line Section */}
@@ -195,6 +307,13 @@ const SustainabilityPortal: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => openMethodology('Waste Rate')}
+                  className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-center hover:bg-white/10 transition-all flex items-center gap-2"
+                >
+                  <BookOpen className="w-4 h-4 text-emerald-400" />
+                  <span className="text-sm font-black text-emerald-400 tracking-tight">VIEW METHODOLOGY</span>
+                </button>
                 <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-center">
                   <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">System Status</span>
                   <span className="text-sm font-black text-emerald-400 tracking-tight">REAL-TIME SYNC</span>
@@ -665,12 +784,22 @@ const DeltaCard = ({ label, value, color, sub, icon }: any) => (
    </div>
 );
 
-const KPIItem = ({ label, value, sub, icon, color = 'bg-white' }: any) => (
+const KPIItem = ({ label, value, sub, icon, color = 'bg-white', onInfoClick }: any) => (
   <div className={`${color} p-8 rounded-[2.5rem] border border-gray-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group cursor-default text-left relative overflow-hidden`}>
     <div className="absolute -bottom-4 -right-4 p-4 opacity-5 group-hover:scale-125 transition-transform">{icon}</div>
     <div className="flex items-start justify-between relative z-10">
       <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 group-hover:text-gray-600 transition-colors">{label}</p>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-gray-600 transition-colors">{label}</p>
+          {onInfoClick && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onInfoClick(); }}
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Info className="w-3 h-3 text-gray-300 group-hover:text-indigo-400" />
+            </button>
+          )}
+        </div>
         <h4 className="text-4xl font-black text-gray-900 tracking-tighter">{value}</h4>
         <div className="flex items-center gap-1.5 mt-3">
           {sub.includes('-') || sub.includes('High') ? <TrendingDown className="w-3.5 h-3.5 text-red-500" /> : <TrendingUp className="w-3.5 h-3.5 text-green-500" />}

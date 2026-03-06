@@ -25,6 +25,8 @@ const SchoolPortal: React.FC = () => {
   // New States
   const [consumptionLevel, setConsumptionLevel] = useState<'LOW' | 'MED' | 'HIGH' | null>(null);
   const [showChecklist, setShowChecklist] = useState(false);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   const symptomsList = ['Nausea', 'Vomiting', 'Diarrhea', 'Fever', 'Dizziness', 'Abdominal Pain'];
 
@@ -75,6 +77,101 @@ const SchoolPortal: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8 relative pb-20 text-left animate-in fade-in duration-700">
       
+      {/* Attendance Modal */}
+      {showAttendanceModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-slate-100">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-600 rounded-xl shadow-lg shadow-emerald-100"><Users2 className="text-white w-5 h-5" /></div>
+                <h3 className="text-xl font-black">Daily Attendance</h3>
+              </div>
+              <button onClick={() => setShowAttendanceModal(false)} className="p-2 hover:bg-slate-100 rounded-xl"><X className="w-6 h-6 text-slate-400" /></button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-5 bg-emerald-50 rounded-[2rem] border border-emerald-100 flex flex-col items-center">
+                  <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Present</span>
+                  <span className="text-3xl font-black text-emerald-700 tracking-tight">1,218</span>
+                </div>
+                <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col items-center">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Absent</span>
+                  <span className="text-3xl font-black text-slate-900 tracking-tight">22</span>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
+                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Attendance Breakdown</h4>
+                 <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                       <span className="text-xs font-bold text-slate-600">Grade 1-3</span>
+                       <span className="text-xs font-black text-slate-900">602/610</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                       <div className="h-full bg-emerald-500" style={{ width: '98.6%' }} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                       <span className="text-xs font-bold text-slate-600">Grade 4-6</span>
+                       <span className="text-xs font-black text-slate-900">616/630</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                       <div className="h-full bg-emerald-500" style={{ width: '97.7%' }} />
+                    </div>
+                 </div>
+              </div>
+              
+              <button onClick={() => setShowAttendanceModal(false)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest transition-transform active:scale-95 shadow-xl shadow-slate-100">Close Attendance</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Calendar Modal */}
+      {showCalendarModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white p-8 rounded-[3.5rem] shadow-2xl w-full max-w-3xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center mb-8 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100"><UtensilsCrossed className="text-white w-5 h-5" /></div>
+                <h3 className="text-xl font-black">Menu Calendar - October 2025</h3>
+              </div>
+              <button onClick={() => setShowCalendarModal(false)} className="p-2 hover:bg-slate-100 rounded-xl"><X className="w-6 h-6 text-slate-400" /></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto no-scrollbar pr-2">
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest py-2">{day}</div>
+                ))}
+                {Array.from({ length: 31 }).map((_, i) => {
+                  const day = i + 1;
+                  const isToday = day === 26;
+                  return (
+                    <div 
+                      key={day} 
+                      className={`p-3 rounded-2xl border min-h-[100px] transition-all ${isToday ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-100' : 'bg-slate-50 border-slate-100 hover:bg-white hover:shadow-md'}`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`text-xs font-black ${isToday ? 'text-indigo-600' : 'text-slate-400'}`}>{day}</span>
+                        {isToday && <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />}
+                      </div>
+                      <p className="text-[9px] font-bold text-slate-600 leading-tight">
+                        {day % 3 === 0 ? 'Nasi Kuning & Ayam' : day % 3 === 1 ? 'Nasi Putih & Ikan' : 'Nasi Goreng & Telur'}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="pt-6 shrink-0">
+              <button onClick={() => setShowCalendarModal(false)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest transition-transform active:scale-95 shadow-xl shadow-slate-100">Close Calendar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Audit Trail Modal */}
       {showAuditTrail && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
@@ -275,8 +372,18 @@ const SchoolPortal: React.FC = () => {
                   </div>
                </div>
                <div className="mt-10 flex gap-4">
-                  <button className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/20 active:scale-95 transition-all">Today's Attendance</button>
-                  <button className="px-6 py-2.5 bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Menu Calendar</button>
+                  <button 
+                    onClick={() => setShowAttendanceModal(true)}
+                    className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-900/20 active:scale-95 transition-all"
+                  >
+                    Today's Attendance
+                  </button>
+                  <button 
+                    onClick={() => setShowCalendarModal(true)}
+                    className="px-6 py-2.5 bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all"
+                  >
+                    Menu Calendar
+                  </button>
                </div>
             </div>
 
